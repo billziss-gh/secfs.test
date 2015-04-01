@@ -1,0 +1,531 @@
+.TH IOZONE 1
+.SH NAME
+Iozone \- Filesystem Benchmark
+.SH SYNOPSIS
+.B Iozone
+.nh
+[\fB\-a|\-A\fP]
+[\fB\-s\fP \fIfilesize_Kb\fP]
+[\fB\-r\fP \fIrecord_size_Kb\fP]
+[\fB\-f\fP \fI[path]filename\fP]
+[\fB\-i\fP \fItest\fP]
+[\fB\-E\fP]
+[\fB\-p\fP]
+[\fB\-m\fP]
+[\fB\-M\fP]
+[\fB\-t\fP \fIchildren\fP]
+[\fB\-h\fP]
+[\fB\-o\fP]
+[\fB\-l\fP \fImin_number_procs\fP]
+[\fB\-u\fP \fImax_number_procs\fP]
+[\fB\-v\fP]
+[\fB\-R\fP]
+[\fB\-x\fP]
+[\fB\-d\fP \fImicroseconds\fP]
+[\fB\-F\fP \fIpath1 path2...\fP]
+[\fB\-V\fP \fIpattern \fP]
+[\fB\-j\fP \fIstride\fP]
+[\fB\-T\fP]
+[\fB\-C\fP]
+[\fB\-B\fP]
+[\fB\-D\fP]
+[\fB\-G\fP]
+[\fB\-I\fP]
+[\fB\-H\fP \fIdepth\fP]
+[\fB\-k\fP \fIdepth\fP]
+[\fB\-U\fP \fImount_point\fP]
+[\fB\-S\fP \fIcache_size\fP]
+[\fB\-O\fP]
+[\fB\-L\fP \fIline_size\fP]
+[\fB\-K\fP]
+[\fB\-N\fP]
+[\fB\-Q\fP]
+[\fB\-P\fP \fIstart_cpu\fP]
+[\fB\-c\fP]
+[\fB\-e\fP]
+[\fB\-b\fP \fIExcel.xls\fP]
+[\fB\-J\fP \fImilliseconds\fP]
+[\fB\-X\fP \fI[path]filename\fP]
+[\fB\-Y\fP \fI[path]filename\fP]
+[\fB\-w\fP]
+[\fB\-W\fP]
+[\fB\-z\fP]
+[\fB\-Z\fP]
+[\fB\-n\fP \fImin_filesize_Kb\fP]
+[\fB\-g\fP \fImax_filesize_Kb\fP]
+[\fB\-y\fP \fImin_recordsize_Kb\fP]
+[\fB\-q\fP \fImax_recordsize_Kb\fP]
+[\fB\-+d\fP]
+[\fB\-+u\fP]
+[\fB\-+m\fP \fIclient_filename\fP]
+[\fB\-+n\fP]
+[\fB\-+N\fP]
+[\fB\-+p\fP \fIpercent_read\fP]
+[\fB\-+r\fP]
+[\fB\-+t\fP]
+[\fB\-+l\fP]
+[\fB\-+L\fP]
+[\fB\-+D\fP]
+[\fB\-+A\fP \fImadvise_selector\fP]
+[\fB\-+h\fP \fIhostname\fP]
+[\fB\-+T\fP]
+[\fB\-+w\fP \fIPercent de-dupable.\fP]
+
+.hy
+.SH DESCRIPTION
+.B Iozone
+is a filesystem benchmark tool. The benchmark generates and measures
+a variety of file operations. 
+.B Iozone
+has been ported to many machines and runs under many operating systems. 
+This document will cover the many different types of operations that are 
+tested as well as coverage of all of the command line options.
+.PP
+.B Iozone
+is useful for determining a broad filesystem analysis of a vendor's
+computer platform. The benchmark tests file I/O performance for the
+following operations.
+.PP
+          Read, write, re-read, re-write, read backwards, read strided,
+fread, fwrite, random read/write, pread/pwrite variants
+.PP
+While computers are typically purchased with an application in mind it is
+also likely that over time the application mix will change. Many vendors
+have enhanced their operating systems to perform well for some frequently
+used applications. Although this accelerates the I/O for those few
+applications it is also likely that the system may not perform well for
+other applications that were not targeted by the operating system. An
+example of this type of enhancement is: Database. Many operating systems
+have tested and tuned the filesystem so it works well with databases. While
+the database users are happy, the other users may not be so happy as the
+entire system may be giving all of the system resources to the database
+users at the expense of all other users. As time rolls on the system
+administrator may decide that a few more office automation tasks could be
+shifted to this machine. The load may now shift from a random reader
+application (database) to a sequential reader. The users may discover that
+the machine is very slow when running this new application and become
+dissatisfied with the decision to purchase this platform. By using 
+.B Iozone
+to get a broad filesystem performance coverage the buyer is much more likely to
+see any hot or cold spots and pick a platform and operating system that is
+more well balanced.
+
+.SH OPTIONS
+.TP
+.BI \-a
+Used to select full automatic mode. Produces output that covers all tested
+file operations for record sizes of 4k to 16M for file sizes of 64k to 512M.
+.TP
+.BI \-A
+This version of automatic mode provides more coverage but consumes a bunch
+of time.
+The 
+.BI \-a 
+option will automatically stop using transfer sizes less than 64k
+once the file size is 32M or larger. This saves time. The
+.BI \-A 
+option tells 
+.B Iozone
+that you are willing to wait and want dense coverage for small transfers 
+even when the file size is very large.
+.BI NOTE:
+This option is deprecated in
+.BI Iozone
+version 3.61.  Use
+.BI \-az\ \-i\ 0\ \-i\ 1
+instead.
+.TP
+.BI \-b\ filename
+Used to specify a filename that will be used for output
+of an Excel compatible file that contains the results.
+.TP
+.BI \-B
+Use mmap() files. This causes all of the temporary files being measured to
+be created and accessed with the mmap() interface. Some applications prefer 
+to treat files as arrays of memory. These applications mmap() the file 
+and then just access the array with loads and stores to perform file I/O.
+.TP
+.BI \-c
+Include close() in the timing calculations. This is useful only if you
+suspect that close() is broken in the operating system currently under test. 
+It can be useful for NFS Version 3 testing as well to help identify if 
+the nfs3_commit is working well.
+.TP
+.BI \-C
+Show bytes transferred by each child in throughput testing. Useful if your
+operating system has any starvation problems in file I/O or in process 
+management.
+.TP
+.BI \-d\ #
+Microsecond delay out of barrier. During the throughput tests all threads or
+processes are forced to a barrier before beginning the test. Normally, 
+all of the threads or processes are released at the same moment. This 
+option allows one to delay a specified time in microseconds between 
+releasing each of the processes or threads.
+.TP
+.BI \-D
+Use msync(MS_ASYNC) on mmap files. This tells the operating system that all
+the data in the mmap space needs to be written to disk asynchronously.
+.TP
+.BI \-e
+Include flush (fsync,fflush) in the timing calculations
+.TP
+.BI \-E
+Used to select the extension tests. Only available on some platforms. Uses
+pread interfaces.
+.TP
+.BI \-f\ filename
+Used to specify the filename for the temporary file under test. This is
+useful when the unmount option is used. When testing with unmount between
+tests it is necessary for the temporary file under test to be in a 
+directory that can be unmounted. It is not possible to unmount the 
+current working directory as the process 
+.B Iozone
+is running in this directory.
+.TP
+.BI \-F\ filename\ filename\ filename\ ?
+Specify each of the temporary file names to be used in the throughput
+testing. The number of names should be equal to the number of processes or 
+threads that are specified.
+.TP
+.BI \-g\ #
+Set maximum file size (in Kbytes) for auto mode. One may also specify
+.BI \-g\ #k 
+(size in Kbytes) or
+.BI \-g\ #m 
+(size in Mbytes) or
+.BI \-g\ #g
+(size in Gbytes). See
+.BI \-n
+for minimum file size.
+.TP
+.BI \-G
+Use msync(MS_SYNC) on mmap files. This tells the operating system that all
+the data in the mmap space needs to be written to disk synchronously.
+.TP
+.BI \-h
+Displays help screen.
+.TP
+.BI \-H\ #
+Use POSIX async I/O with\ # async operations. 
+.B Iozone
+will use POSIX async I/O with a bcopy from the async buffers back into the 
+applications buffer. Some versions of MSC NASTRAN perform I/O this way. 
+This technique is used by applications so that the async I/O may be performed 
+in a library and requires no changes to the applications internal model.
+.TP
+.BI \-i\ #
+Used to specify which tests to run. (0=write/rewrite, 1=read/re-read,
+2=random-read/write, 3=Read-backwards, 4=Re-write-record,
+5=stride-read, 6=fwrite/re-fwrite, 7=fread/Re-fread,
+8=mixed workload, 9=pwrite/Re-pwrite, 10=pread/Re-pread, 11=pwritev/Re-pwritev,
+12=preadv/Re-preadv). 
+One will always need to specify 0 so that any of the following tests will
+have a file to measure.
+.BI -i\ #\ -i\ #\ -i\ #
+is also supported so that one may select more than one test.
+.TP
+.BI \-I
+Use DIRECT IO if possible for all file operations. Tells the filesystem that
+all operations to the file are to bypass the buffer cache and go directly to 
+disk. (not available on all platforms)
+.TP
+.BI \-j\ #
+Set stride of file accesses to (# * record size). The stride read test will
+read records at this stride.
+.TP
+.BI \-J\ #
+Millisecond delay before each I/O operation. This simulates the
+cpu compute cycle of an application that precedes an I/O operation.
+One may also use
+.BI \-X
+or
+.BI \-Y
+to control the compute cycle on a per I/O operation basis.
+.TP
+.BI \-k\ #
+Use POSIX async I/O (no bcopy) with\ # async operations. 
+.B Iozone
+will use POSIX async I/O and will not perform any extra bcopys. The buffers 
+used by 
+.B Iozone 
+will be handed to the async I/O system call directly.
+.TP
+.BI \-K
+Inject some random accesses in the testing. 
+.TP
+.BI \-l\ #
+Set the lower limit on number of processes to run. When running throughput
+tests this option allows the user to specify the least number of processes 
+or threads to start. This option should be used in conjunction with 
+the
+.BI \-u
+option.
+.TP
+.BI \-L\ #
+Set processor cache line size to value (in bytes). Tells 
+.B Iozone 
+the processor cache line size.  This is used internally to help speed up 
+the test.
+.TP
+.BI \-m
+Tells 
+.B Iozone
+to use multiple buffers internally. Some applications read into a single
+buffer over and over. Others have an array of buffers. This option allows
+both types of applications to be simulated. 
+.B Iozone\'s 
+default behavior is to re-use internal buffers. This option allows one 
+to override the default and to use multiple internal buffers.
+.TP
+.BI \-M
+\.B
+Iozone
+will call uname() and will put the string in the output file.
+.TP
+.BI \-n\ #
+Set minimum file size (in Kbytes) for auto mode. One may also specify
+.BI \-n\ #k 
+(size in Kbytes) or
+.BI \-n\ #m 
+(size in Mbytes) or
+.BI \-n\ #g
+(size in Gbytes). See
+.BI \-g
+for maximum file size.
+.TP
+.BI \-N
+Report results in microseconds per operation.
+.TP
+.BI \-o
+Writes are synchronously written to disk. (O_SYNC). 
+.B Iozone
+will open the files with the O_SYNC flag. This forces all writes to the 
+file to go completely to disk before returning to the benchmark.
+.TP
+.BI \-O
+Give results in operations per second.
+.TP
+.BI \-p
+This purges the processor cache before each file operation. 
+.B Iozone
+will allocate another internal buffer that is aligned to the same 
+processor cache boundary and is of a size that matches the processor cache. 
+It will zero fill this alternate buffer before beginning each test.
+This will purge the processor cache and allow one to see the memory
+subsystem without the acceleration due to the processor cache.
+.TP
+.BI \-P\ #
+Bind processes/threads to processors, starting with this cpu\ #. Only
+available on some platforms. The first sub process or thread will begin 
+on the specified processor. Future processes or threads will be placed on
+the next processor. Once the total number of cpus is exceeded then
+future processes or threads will be placed in a round robin
+fashion.
+.TP
+.BI \-q\ #
+Set maximum record size (in Kbytes) for auto mode. One may also specify
+.BI \-q\ #k 
+(size in Kbytes) or
+.BI \-q\ #m 
+(size in Mbytes) or
+.BI \-q\ #g
+(size in Gbytes). See
+.BI \-y
+for minimum record size.
+.TP
+.BI \-Q
+Create offset/latency files. 
+.B Iozone
+will create latency versus offset data files that can be imported with a 
+graphics package and plotted. This is useful for finding if certain offsets
+have very high latencies. Such as the point where UFS will allocate its
+first indirect block.  One can see from the data the impacts of the extent 
+allocations for extent based filesystems with this option.
+.TP
+.BI \-r\ #
+Used to specify the record size, in Kbytes, to test. One may also specify
+.BI \-r\ #k 
+(size in Kbytes) or
+.BI \-r\ #m 
+(size in Mbytes) or
+.BI \-r\ #g
+(size in Gbytes).
+.TP
+.BI \-R
+Generate Excel report. 
+.B Iozone
+will generate an Excel compatible report to standard out. This
+file may be imported with Microsoft Excel (space delimited) and used to
+create a graph of the filesystem performance. Note: The 3D graphs are 
+column oriented. You will need to select this when graphing as the 
+default in Excel is row oriented data.
+.TP
+.BI \-s\ #
+Used to specify the size, in Kbytes, of the file to test. One may also
+specify
+.BI \-s\ #k 
+(size in Kbytes) or 
+.BI \-s\ #m 
+(size in Mbytes) or
+.BI \-s\ #g
+(size in Gbytes).
+.TP
+.BI \-S\ #
+Set processor cache size to value (in Kbytes). This tells 
+.B Iozone
+the size of the processor cache.  It is used internally for buffer alignment 
+and for the purge functionality.
+.TP
+.BI \-t\ #
+Run 
+.B Iozone
+in a throughput mode. This option allows the user to specify how
+many threads or processes to have active during the measurement.
+.TP
+.BI \-T
+Use POSIX pthreads for throughput tests. Available on platforms that have
+POSIX threads.
+.TP
+.BI \-u\ #
+Set the upper limit on number of processes to run. When running throughput
+tests this option allows the user to specify the greatest number of 
+processes or threads to start. This option should be used in conjunction 
+with the
+.BI \-l
+option.
+.TP
+.BI \-U\ mountpoint
+Mount point to unmount and remount between tests. 
+.B Iozone
+will unmount and remount this
+mount point before beginning each test. This guarantees that the buffer
+cache does not contain any of the file under test.
+.TP
+.BI \-v 
+Display the version of 
+.B Iozone.
+.TP
+.BI \-V\ #
+Specify a pattern that is to be written to the temporary file and validated
+for accuracy in each of the read tests.
+.TP
+.BI \-w
+Do not unlink temporary files when finished using them.
+.TP
+.BI \-W
+Lock file when reading or writing.
+.TP
+.BI \-x
+Turn off stone-walling. Stonewalling is a technique used internally to
+.B Iozone.
+It is used during the throughput tests. The code starts all threads or 
+processes and then stops them on a barrier.  Once they are all ready to 
+start then they are all released at the same time. The moment that
+any of the threads or processes finish their work then the entire test is
+terminated and throughput is calculated on the total I/O that was 
+completed up to this point. This ensures that the entire measurement was 
+taken while all of the processes or threads were running in parallel. 
+This flag allows one to turn off the stonewalling and see what happens.
+.TP
+.BI \-X\ filename
+Used to specify a filename that will be used for the 
+write telemetry information. The file contains lines
+with offset, size, delay_in_milliseconds. Each of 
+these lines are used to perform an I/O operation. 
+This is used when an application's specific I/O operations
+are known, and one wishes to benchmark the system 
+with this specific application file behavior.
+.TP
+.BI \-y\ #
+Set minimum record size (in Kbytes) for auto mode. One may also specify
+.BI \-y\ #k 
+(size in Kbytes) or
+.BI \-y\ #m 
+(size in Mbytes) or
+.BI \-y\ #g
+(size in Gbytes). See
+.BI \-q
+for maximum record size.
+.TP
+.BI \-Y\ filename
+Used to specify a filename that will be used for the 
+read telemetry information. The file contains lines
+with offset, size, delay_in_milliseconds. Each of 
+these lines are used to perform an I/O operation. 
+This is used when an application's specific I/O operations
+are known, and one wishes to benchmark the system 
+with this specific application file behavior.
+.TP
+.BI \-z
+Used in conjunction with
+.BI \-a
+to test all possible record sizes. Normally
+.BI Iozone
+omits testing of small record sizes for very large files
+when used in full automatic mode. This option forces
+.BI Iozone
+to include the small record sizes in the automatic tests also.
+.TP
+.BI \-Z
+Enable mixing of mmap I/O and file I/O.
+.TP
+.BI \-+m\ filename
+Used to specify a filename that will be used to specify
+the clients in a distributed measurement. The file
+contains one line for each client. The fields are 
+space delimited. Field 1 is the client name. Field 2
+is the working directory, on the client, where Iozone
+will run. Field 3 is the path to the executable Iozone
+on the client.
+.TP
+.BI \-+n
+No retests selected. Used to prevent retests from running.
+.TP
+.BI \-+N
+No truncating or deleting of previous test file before the sequential write test. Useful only after -w is used in previous command to leave the test file in place for reuse.  This flag is of limited use, when a single retest is not enough, or to easily control when sequential write retests occur without file truncation or deletion.
+.TP
+.BI \-+u
+Used to enable CPU statistics collection.
+.TP
+.BI \-+d 
+Diagnostic mode to troubleshoot a broken file I/O subsystem.
+.TP
+.BI \-+p\  percentage_reads
+Used to set the percentage of threads/processes that will perform read
+testing in the mixed workload test case.
+.TP
+.BI \-+r
+Enable O_RSYNC | O_SYNC on all testing. 
+.TP
+.BI \-+l
+Enable byte range locking.
+.TP
+.BI \-+L
+Enable byte range locking & shared file mode.
+.TP
+.BI \-+D
+Enable O_DSYNC on all testing. 
+.TP
+.BI \-+t
+Enable network performance test. Use with -+m
+.TP
+.BI \-+A #
+Enable madvise behavior. 0 = normal, 1=random, 2=sequential, 3=dontneed, 4=willneed
+.TP
+.BI \-+B
+Enable sequential mixed workload testing.
+.TP
+.BI \-+T
+Enable time stamps logging.
+.TP
+.BI \-+h
+Manually set hostname.
+.TP
+.BI \-+w #
+Percentage of data to be de-dupable between files.
+
+.SH AUTHOR
+Original Author: William D. Norcott. wnorcott@us.oracle.com
+
+Features & extensions: Don Capps capps@iozone.org
