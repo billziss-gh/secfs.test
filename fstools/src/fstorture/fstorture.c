@@ -1033,6 +1033,10 @@ int	main(int argc, char **argv)
 	}
 	testproc(i, 1, n);            /* the last process is the parent */
 
+    /* wait for all processes to exit */
+    while (-1 != wait(0))
+        ;
+
 #ifdef XILOG
 	XILogEndTestCase(gLogRef, kXILogTestPassOnErrorLevel);
 	XILogCloseLog(gLogRef);
