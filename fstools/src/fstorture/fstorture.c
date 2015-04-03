@@ -855,17 +855,29 @@ int	main(int argc, char **argv)
 	dirs = 0;
 	dirp = opendir(root1);
 	while ((dp = readdir(dirp)) != NULL)
+    {
+        if (dp->d_name[0] == '.' && dp->d_name[1] == '\0')
+            continue;
+        if (dp->d_name[0] == '.' && dp->d_name[1] == '.' && dp->d_name[2] == '\0')
+            continue;
 		dirs++;
+    }
 	(void)closedir(dirp);
-	if (dirs != 2)
+	if (dirs != 0)
 		printf("--> WARNING: %s should be an EMPTY DIRECTORY <-- \n", root1);
 
 	dirs = 0;
 	dirp = opendir(root2);
 	while ((dp = readdir(dirp)) != NULL)
+    {
+        if (dp->d_name[0] == '.' && dp->d_name[1] == '\0')
+            continue;
+        if (dp->d_name[0] == '.' && dp->d_name[1] == '.' && dp->d_name[2] == '\0')
+            continue;
 		dirs++;
+    }
 	(void)closedir(dirp);
-	if (dirs != 2)
+	if (dirs != 0)
 		printf("--> WARNING: %s should be an EMPTY DIRECTORY <--\n", root2);
 
 
