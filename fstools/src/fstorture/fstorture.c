@@ -48,6 +48,7 @@ static btbool	noStats = 0;
 static btbool	noPerms = 0;
 static btbool	softlinks = 1;
 static btbool	hardlinks = 1;
+static btbool	ignore_getattrlist = 0;
 static btbool	sleepy = 0;
 static btbool	acl = 0;
 static btbool	nocache = 0;
@@ -726,6 +727,7 @@ void usage(char *argv) {
 	fprintf(stderr, "   acl         Performs ACL busting\n");
 	fprintf(stderr, "   nosoftlinks Disables soft-links\n");
 	fprintf(stderr, "   nohardlinks Disables hard-links\n");
+	fprintf(stderr, "   ignore_getattrlist\n");
 	fprintf(stderr, "   sleep       Adds sleep between operations\n");
 	fprintf(stderr, "   -v          Increases verbosity\n");
 	fprintf(stderr, "   -c 100      Each process will run this many tests\n");
@@ -799,6 +801,8 @@ int	main(int argc, char **argv)
 			softlinks = 0;
 		} else if(strcmp(argv[i], "nohardlinks") == 0) {
 			hardlinks = 0;
+		} else if(strcmp(argv[i], "ignore_getattrlist") == 0) {
+			ignore_getattrlist = 1;
 		} else if(strcmp(argv[i], "-v") == 0) {
 			trace = 1;
 		} else if((strcmp(argv[i],"count")==0)||(strcmp(argv[i],"-c")==0)) {
@@ -883,7 +887,8 @@ int	main(int argc, char **argv)
 		exit(-1);
 	}
 	printf("Capabilities of %s (on %s): softlinks?", root1, st.f_mntonname);
-	if (buf.caps.capabilities[VOL_CAPABILITIES_FORMAT] & VOL_CAP_FMT_SYMBOLICLINKS) {
+	if (buf.caps.capabilities[VOL_CAPABILITIES_FORMAT] & VOL_CAP_FMT_SYMBOLICLINKS ||
+        ignore_getattrlist) {
 		printf("Y");
 	} else {
 		printf("N");
@@ -891,14 +896,16 @@ int	main(int argc, char **argv)
 	}
 
 	printf(" hardlinks?");
-	if (buf.caps.capabilities[VOL_CAPABILITIES_FORMAT] & VOL_CAP_FMT_HARDLINKS) {
+	if (buf.caps.capabilities[VOL_CAPABILITIES_FORMAT] & VOL_CAP_FMT_HARDLINKS ||
+        ignore_getattrlist) {
 		printf("Y");
 	} else {
 		printf("N");
 		hardlinks = 0;
 	}
         printf(" ACLs?");
-        if(buf.caps.capabilities[VOL_CAPABILITIES_INTERFACES]&VOL_CAP_INT_EXTENDED_SECURITY){
+        if (buf.caps.capabilities[VOL_CAPABILITIES_INTERFACES]&VOL_CAP_INT_EXTENDED_SECURITY ||
+            ignore_getattrlist){
                 printf("Y");
         } else {
                 printf("N");
@@ -915,7 +922,8 @@ int	main(int argc, char **argv)
 		exit(-1);
 	}
 	printf("Capabilities of %s (on %s): softlinks?", root2, st.f_mntonname);
-	if (buf.caps.capabilities[VOL_CAPABILITIES_FORMAT] & VOL_CAP_FMT_SYMBOLICLINKS) {
+	if (buf.caps.capabilities[VOL_CAPABILITIES_FORMAT] & VOL_CAP_FMT_SYMBOLICLINKS ||
+        ignore_getattrlist) {
 		printf("Y");
 	} else {
 		printf("N");
@@ -923,14 +931,16 @@ int	main(int argc, char **argv)
 	}
 	printf(" hardlinks?");
 
-	if (buf.caps.capabilities[VOL_CAPABILITIES_FORMAT] & VOL_CAP_FMT_HARDLINKS) {
+	if (buf.caps.capabilities[VOL_CAPABILITIES_FORMAT] & VOL_CAP_FMT_HARDLINKS ||
+        ignore_getattrlist) {
 		printf("Y");
 	} else {
 		printf("N");
 		hardlinks = 0;
 	}
 	printf(" ACLs?");
-        if(buf.caps.capabilities[VOL_CAPABILITIES_INTERFACES]&VOL_CAP_INT_EXTENDED_SECURITY){
+        if (buf.caps.capabilities[VOL_CAPABILITIES_INTERFACES]&VOL_CAP_INT_EXTENDED_SECURITY ||
+            ignore_getattrlist){
                 printf("Y");
         } else {
                 printf("N");
