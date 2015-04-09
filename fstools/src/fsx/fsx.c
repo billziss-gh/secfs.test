@@ -53,7 +53,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
+#if defined(__APPLE__)
 #include <sys/paths.h>
+#endif
 #include <sys/param.h>
 #ifdef _UWIN
 # include <limits.h>
@@ -75,6 +77,48 @@
 #include <libgen.h>
 #ifdef XILOG
 # include <XILog/XILog.h>
+#endif
+
+#if defined(__linux__)
+#include <inttypes.h>
+
+#define _PATH_FORKSPECIFIER    "/..namedfork/"
+
+#define F_NOCACHE 1000000
+#define fcntl(fd, cmd, ...)\
+    (F_NOCACHE == cmd ? 0 : fcntl(fd, cmd, __VA_ARGS__))
+
+#define fgetxattr(fd, name, value, size, position, options)\
+    fgetxattr(fd, name, value, size)
+#define fsetxattr(fd, name, value, size, position, options)\
+    fsetxattr(fd, name, value, size, options)
+#define fremovexattr(fd, name, options)\
+    fremovexattr(fd, name)
+
+static size_t
+strlcpy(char *dst, const char *src, size_t maxlen) {
+    const size_t srclen = strlen(src);
+    if (srclen < maxlen) {
+        memcpy(dst, src, srclen+1);
+    } else if (maxlen != 0) {
+        memcpy(dst, src, maxlen-1);
+        dst[maxlen-1] = '\0';
+    }
+    return srclen;
+}
+static size_t
+strlcat(char *dst, const char *src, size_t maxlen) {
+    const size_t srclen = strlen(src);
+    const size_t dstlen = strnlen(dst, maxlen);
+    if (dstlen == maxlen) return maxlen+srclen;
+    if (srclen < maxlen-dstlen) {
+        memcpy(dst+dstlen, src, srclen+1);
+    } else {
+        memcpy(dst+dstlen, src, maxlen-dstlen-1);
+        dst[maxlen-1] = '\0';
+    }
+    return dstlen + srclen;
+}
 #endif
 
 /*

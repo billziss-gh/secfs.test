@@ -1,4 +1,12 @@
+Platform	= $(shell uname)
+
+ifeq ($(Platform),Darwin)
+iozone_tgt	= macosx
 all: tools tools/bin/bonnie++ tools/bin/fstorture tools/bin/fsx tools/bin/iozone
+else
+iozone_tgt	= linux
+all: tools tools/bin/bonnie++ tools/bin/fsx tools/bin/iozone
+endif
 
 tools:
 	mkdir -p tools/bin
@@ -20,6 +28,6 @@ tools/bin/fsx:
 	git clean -dfx fstools/src/fsx
 
 tools/bin/iozone:
-	make -C iozone/src/current macosx
+	make -C iozone/src/current $(iozone_tgt)
 	cp iozone/src/current/iozone $@
 	git clean -dfx iozone/src/current

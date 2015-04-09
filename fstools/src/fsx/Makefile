@@ -21,10 +21,8 @@
 # @APPLE_LICENSE_HEADER_END@
 #
 
-#ARCHS := ppc i386 x86_64
-ARCHS := i386 x86_64
 INTERNAL_FRAMEWORKS := /AppleInternal/Library/Frameworks
-CFLAGS := $(ARCHS:%=-arch %) -Wall -O3
+CFLAGS := -Wall -O3
 
 ifeq ($(wildcard $(INTERNAL_FRAMEWORKS)), $(INTERNAL_FRAMEWORKS))
 CPPFLAGS += -DXILOG
