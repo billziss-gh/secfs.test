@@ -2,10 +2,10 @@ Platform	= $(shell uname)
 
 ifeq ($(Platform),Darwin)
 iozone_tgt	= macosx
-all: tools tools/bin/bonnie++ tools/bin/fstorture tools/bin/fsx tools/bin/iozone
+all: tools tools/bin/bonnie++ tools/bin/fsracer tools/bin/fstorture tools/bin/fsx tools/bin/iozone
 else
 iozone_tgt	= linux
-all: tools tools/bin/bonnie++ tools/bin/fsx tools/bin/iozone
+all: tools tools/bin/bonnie++ tools/bin/fsracer tools/bin/fsx tools/bin/iozone
 endif
 
 tools:
@@ -16,6 +16,9 @@ tools/bin/bonnie++:
 	make -C bonnie++
 	cp bonnie++/bonnie++ $@
 	git clean -dfx bonnie++
+
+tools/bin/fsracer:
+	cp fsracer/* $(@D)
 
 tools/bin/fstorture:
 	make -C fstools/src/fstorture

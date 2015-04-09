@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec bash -i -c "$(dirname "$0")/fs_racer.sh $*"
