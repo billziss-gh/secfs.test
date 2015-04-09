@@ -1,12 +1,19 @@
 Platform	= $(shell uname)
+Targets		= \
+	tools/bin/bonnie++ \
+	tools/bin/fsracer \
+	tools/bin/fsstress \
+	tools/bin/fsx \
+	tools/bin/iozone
 
 ifeq ($(Platform),Darwin)
 iozone_tgt	= macosx
-all: tools tools/bin/bonnie++ tools/bin/fsracer tools/bin/fstorture tools/bin/fsx tools/bin/iozone
-else
+Targets		+= tools/bin/fstorture
+else ifeq ($(Platform),Linux)
 iozone_tgt	= linux
-all: tools tools/bin/bonnie++ tools/bin/fsracer tools/bin/fsx tools/bin/iozone
 endif
+
+all: tools $(Targets)
 
 tools:
 	mkdir -p tools/bin
@@ -24,6 +31,11 @@ tools/bin/fstorture:
 	make -C fstools/src/fstorture
 	cp fstools/src/fstorture/fstorture $@
 	git clean -dfx fstools/src/fstorture
+
+tools/bin/fsstress:
+	make -C fsstress
+	cp fsstress/fsstress $@
+	git clean -dfx fsstress
 
 tools/bin/fsx:
 	make -C fstools/src/fsx
