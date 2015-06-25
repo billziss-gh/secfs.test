@@ -177,7 +177,7 @@ if supported lchmod; then
 	expect 0 symlink ${n1} ${n0}
 	ctime1=`${fstest} lstat ${n0} ctime`
 	sleep 1
-	expect EPERM -u 65534 lchmod ${n0} 0321
+	expect "EACCES|EPERM" -u 65534 lchmod ${n0} 0321
 	ctime2=`${fstest} lstat ${n0} ctime`
 	test_check $ctime1 -eq $ctime2
 	expect 0 unlink ${n0}

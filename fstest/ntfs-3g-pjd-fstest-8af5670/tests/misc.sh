@@ -15,7 +15,7 @@ if [ $? -eq 0 ]; then
 else
 	maindir="`pwd`/${dir}/../.."
 fi
-fstest="${maindir}/fstest"
+[ -z "${fstest}" ] && fstest="${maindir}/fstest"
 . ${maindir}/tests/conf
 
 run_getconf()
@@ -69,12 +69,12 @@ expect()
 {
 	e="${1}"
 	shift
-	r=`${fstest} $* 2>/dev/null | tail -1`
+	r=`${fstest} $* 2>&1 | tail -1`
 	echo "${r}" | egrep '^'${e}'$' >/dev/null 2>&1
 	if [ $? -eq 0 ]; then
-		echo "ok ${ntest}"
+		echo "ok ${ntest}" - expect "$e" "$@"
 	else
-		echo "not ok ${ntest}"
+		echo "not ok ${ntest}" - expect "$e" "$@" - got "$r"
 	fi
 	ntest=`expr $ntest + 1`
 }
@@ -98,16 +98,21 @@ jexpect()
 test_check()
 {
 	if [ $* ]; then
-		echo "ok ${ntest}"
+		echo "ok ${ntest}" - test_check "$@"
 	else
-		echo "not ok ${ntest}"
+		echo "not ok ${ntest}" - test_check "$@"
 	fi
 	ntest=`expr $ntest + 1`
 }
 
 namegen()
 {
-	echo "fstest_`dd if=/dev/urandom bs=1k count=1 2>/dev/null | md5sum  | cut -f1 -d' '`"
+    if which md5sum >/dev/null; then
+        md5sum=md5sum
+    else
+        md5sum=md5
+    fi
+	echo "fstest_`dd if=/dev/urandom bs=1k count=1 2>/dev/null | ${md5sum}  | cut -f1 -d' '`"
 }
 
 quick_exit()
@@ -126,9 +131,13 @@ supported()
 		fi
 		;;
 	lchmod)
-		if [ ${os} != "FreeBSD" ]; then
-			return 1
+		if [ ${os} = "FreeBSD" ]; then
+			return 0
 		fi
+		if [ ${os} = "Darwin" ]; then
+			return 0
+		fi
+        return 1
 		;;
 	esac
 	return 0

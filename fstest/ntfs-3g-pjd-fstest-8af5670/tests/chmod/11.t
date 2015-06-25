@@ -42,7 +42,7 @@ SunOS)
 	expect 0 -u 65534 -g 65534 chmod ${n1} 01644
 	expect 0644 stat ${n1} mode
 	;;
-Linux)
+Linux|Darwin)
 	expect 0 -u 65534 -g 65534 chmod ${n1} 01644
 	expect 01644 stat ${n1} mode
 	;;

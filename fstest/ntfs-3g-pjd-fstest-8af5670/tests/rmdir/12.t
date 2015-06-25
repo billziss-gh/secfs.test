@@ -21,6 +21,16 @@ FreeBSD)
 Linux)
 	expect 'ENOTEMPTY|EEXIST' rmdir ${n0}/${n1}/..
 	;;
+Darwin)
+    case "${fs}" in
+    secfs)
+    	expect EINVAL rmdir ${n0}/${n1}/..
+        ;;
+    *)
+    	expect 'ENOTEMPTY' rmdir ${n0}/${n1}/..
+    	;;
+    esac
+	;;
 *)
 	expect EEXIST rmdir ${n0}/${n1}/..
 	;;

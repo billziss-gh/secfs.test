@@ -11,5 +11,13 @@ echo "1..3"
 n0=`namegen`
 
 expect 0 mkfifo ${n0} 0644
-expect ENXIO open ${n0} O_WRONLY,O_NONBLOCK
+case "${os}:${fs}" in
+Darwin:secfs)
+    # This appears to be a problem in OSXFUSE; secfs-fuse does not even see the open() call.
+    expect EPERM open ${n0} O_WRONLY,O_NONBLOCK
+    ;;
+*)
+    expect ENXIO open ${n0} O_WRONLY,O_NONBLOCK
+    ;;
+esac
 expect 0 unlink ${n0}
