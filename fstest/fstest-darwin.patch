@@ -88,19 +88,18 @@ index 0693ec9..18cd344 100644
 +# Known file systems: UFS, ZFS, ext3, ext4, ntfs-3g, xfs, btrfs, glusterfs, HFS+, secfs
 +fs="secfs"
 diff --git a/tests/misc.sh b/tests/misc.sh
-index 0faefcb..e8421d2 100644
+index 0faefcb..3d9ce08 100644
 --- a/tests/misc.sh
 +++ b/tests/misc.sh
-@@ -15,7 +15,7 @@ if [ $? -eq 0 ]; then
- else
+@@ -16,6 +16,7 @@ else
  	maindir="`pwd`/${dir}/../.."
  fi
--fstest="${maindir}/fstest"
-+[ -z "${fstest}" ] && fstest="${maindir}/fstest"
+ fstest="${maindir}/fstest"
++[ -x "${fstest}" ] || fstest="fstest"
  . ${maindir}/tests/conf
  
  run_getconf()
-@@ -69,12 +69,12 @@ expect()
+@@ -69,12 +70,12 @@ expect()
  {
  	e="${1}"
  	shift
@@ -116,7 +115,7 @@ index 0faefcb..e8421d2 100644
  	fi
  	ntest=`expr $ntest + 1`
  }
-@@ -98,16 +98,21 @@ jexpect()
+@@ -98,16 +99,21 @@ jexpect()
  test_check()
  {
  	if [ $* ]; then
@@ -141,7 +140,7 @@ index 0faefcb..e8421d2 100644
  }
  
  quick_exit()
-@@ -126,9 +131,13 @@ supported()
+@@ -126,9 +132,13 @@ supported()
  		fi
  		;;
  	lchmod)
