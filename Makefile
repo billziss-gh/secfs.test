@@ -3,6 +3,7 @@ Targets		= \
 	tools/bin/bonnie++ \
 	tools/bin/fsracer \
 	tools/bin/fsstress \
+	tools/bin/fstest \
 	tools/bin/fsx \
 	tools/bin/iozone
 
@@ -27,15 +28,20 @@ tools/bin/bonnie++:
 tools/bin/fsracer:
 	cp fsracer/* $(@D)
 
-tools/bin/fstorture:
-	make -C fstools/src/fstorture
-	cp fstools/src/fstorture/fstorture $@
-	git clean -dfx fstools/src/fstorture
-
 tools/bin/fsstress:
 	make -C fsstress
 	cp fsstress/fsstress $@
 	git clean -dfx fsstress
+
+tools/bin/fstest:
+	make -C fstest/fstest
+	cp fstest/fstest/fstest $@
+	git clean -dfx "$(shell cd fstest/fstest && pwd -P)"
+
+tools/bin/fstorture:
+	make -C fstools/src/fstorture
+	cp fstools/src/fstorture/fstorture $@
+	git clean -dfx fstools/src/fstorture
 
 tools/bin/fsx:
 	make -C fstools/src/fsx
