@@ -19,7 +19,7 @@ That's all. Enjoy.
 
 Currently supported operating systems: FreeBSD, Solaris, Linux.
 Currently supported file system types: UFS, ZFS, ext3, ext4, ntfs-3g,
-                                       xfs, btrfs, glusterfs.
+                                       xfs, btrfs, glusterfs, secfs.
 
 Author: 
 Pawel Jakub Dawidek <pjd@FreeBSD.org>
