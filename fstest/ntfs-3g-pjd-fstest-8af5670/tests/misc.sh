@@ -16,6 +16,7 @@ else
 	maindir="`pwd`/${dir}/../.."
 fi
 fstest="${maindir}/fstest"
+[ -x "${fstest}" ] || fstest="${maindir}/../../tools/bin/fstest"
 [ -x "${fstest}" ] || fstest="fstest"
 . ${maindir}/tests/conf
 

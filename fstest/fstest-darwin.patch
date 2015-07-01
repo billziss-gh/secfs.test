@@ -87,19 +87,81 @@ index 0693ec9..18cd344 100644
 -fs="ext3"
 +# Known file systems: UFS, ZFS, ext3, ext4, ntfs-3g, xfs, btrfs, glusterfs, HFS+, secfs
 +fs="secfs"
+diff --git a/tests/link/03.t b/tests/link/03.t
+index 0ad3354..bf5b228 100755
+--- a/tests/link/03.t
++++ b/tests/link/03.t
+@@ -6,27 +6,34 @@ desc="link returns ENAMETOOLONG if an entire length of either path name exceeded
+ dir=`dirname $0`
+ . ${dir}/../misc.sh
+ 
+-echo "1..16"
++case "${os}:${fs}" in
++Darwin:*)
++    # This test creates an unremovable file on Darwin:HFS+; so disable it!
++    quick_exit
++    ;;
++*)
++    echo "1..16"
+ 
+-n0=`namegen`
++    n0=`namegen`
+ 
+-expect 0 mkdir ${name255} 0755
+-expect 0 mkdir ${name255}/${name255} 0755
+-expect 0 mkdir ${name255}/${name255}/${name255} 0755
+-expect 0 mkdir ${path1021} 0755
+-expect 0 create ${path1023} 0644
+-expect 0 link ${path1023} ${n0}
+-expect 0 unlink ${path1023}
+-expect 0 link ${n0} ${path1023}
+-expect 0 unlink ${path1023}
+-create_too_long
+-expect ENAMETOOLONG link ${n0} ${too_long}
+-unlink_too_long
+-expect 0 unlink ${n0}
+-create_too_long
+-expect ENAMETOOLONG link ${too_long} ${n0}
+-unlink_too_long
+-expect 0 rmdir ${path1021}
+-expect 0 rmdir ${name255}/${name255}/${name255}
+-expect 0 rmdir ${name255}/${name255}
+-expect 0 rmdir ${name255}
++    expect 0 mkdir ${name255} 0755
++    expect 0 mkdir ${name255}/${name255} 0755
++    expect 0 mkdir ${name255}/${name255}/${name255} 0755
++    expect 0 mkdir ${path1021} 0755
++    expect 0 create ${path1023} 0644
++    expect 0 link ${path1023} ${n0}
++    expect 0 unlink ${path1023}
++    expect 0 link ${n0} ${path1023}
++    expect 0 unlink ${path1023}
++    create_too_long
++    expect ENAMETOOLONG link ${n0} ${too_long}
++    unlink_too_long
++    expect 0 unlink ${n0}
++    create_too_long
++    expect ENAMETOOLONG link ${too_long} ${n0}
++    unlink_too_long
++    expect 0 rmdir ${path1021}
++    expect 0 rmdir ${name255}/${name255}/${name255}
++    expect 0 rmdir ${name255}/${name255}
++    expect 0 rmdir ${name255}
++esac
 diff --git a/tests/misc.sh b/tests/misc.sh
-index 0faefcb..3d9ce08 100644
+index 0faefcb..6714f8f 100644
 --- a/tests/misc.sh
 +++ b/tests/misc.sh
-@@ -16,6 +16,7 @@ else
+@@ -16,6 +16,8 @@ else
  	maindir="`pwd`/${dir}/../.."
  fi
  fstest="${maindir}/fstest"
++[ -x "${fstest}" ] || fstest="${maindir}/../../tools/bin/fstest"
 +[ -x "${fstest}" ] || fstest="fstest"
  . ${maindir}/tests/conf
  
  run_getconf()
-@@ -69,12 +70,12 @@ expect()
+@@ -69,12 +71,12 @@ expect()
  {
  	e="${1}"
  	shift
@@ -115,7 +177,7 @@ index 0faefcb..3d9ce08 100644
  	fi
  	ntest=`expr $ntest + 1`
  }
-@@ -98,16 +99,21 @@ jexpect()
+@@ -98,16 +100,21 @@ jexpect()
  test_check()
  {
  	if [ $* ]; then
@@ -140,7 +202,7 @@ index 0faefcb..3d9ce08 100644
  }
  
  quick_exit()
-@@ -126,9 +132,13 @@ supported()
+@@ -126,9 +133,13 @@ supported()
  		fi
  		;;
  	lchmod)
