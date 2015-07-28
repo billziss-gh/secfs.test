@@ -1,6 +1,7 @@
 Platform	= $(shell uname)
 Targets		= \
 	tools/bin/bonnie++ \
+	tools/bin/fsrand.py tools/bin/cmptree.py \
 	tools/bin/fsracer \
 	tools/bin/fsstress \
 	tools/bin/fstest \
@@ -27,6 +28,12 @@ tools/bin/bonnie++:
 
 tools/bin/fsracer:
 	cp fsracer/* $(@D)
+
+tools/bin/fsrand.py:
+	cp fsrand/fsrand.py $(@D)
+
+tools/bin/cmptree.py:
+	cp fsrand/cmptree.py $(@D)
 
 tools/bin/fsstress:
 	make -C fsstress

@@ -2,7 +2,7 @@
 
 This is a collection of file system test programs, which can be used to test POSIX file systems and in particular OSXFUSE and FUSE file systems. I use this collection of tools to test my own file system Secfs (Secure Cloud File System).
 
-This collection is wholly comprised of projects written by others. Each individual project has its own license which applies to it and it remains of course the property of its respective owner(s). In many cases I did some porting work to/from OSX and to/from Linux to ensure that all tools (with a single exception) run on both operating systems. I release any such changes to the public domain.
+This collection is comprised mostly of projects written by others. Each individual project has its own license which applies to it and it remains of course the property of its respective owner(s). In many cases I did some porting work to/from OSX and to/from Linux to ensure that all tools (with a single exception) run on both operating systems. I release any such changes to the public domain.
 
 My motivation in creating this collection is that there was no single place where a file system developer can go to get a comprehensive test suite to test their file system. Although tools exist, they are difficult to find, not well maintained and often quirky and buggy. OTOH these tools have helped me find quite a few problems in my own file system, the OSXFUSE/FUSE layer and even OSX itself.
 
@@ -16,6 +16,8 @@ The tools included in the collection are:
     - License: GPL v2
 - fsracer: From the LTP. A collection of shell scripts that runs multiple operations simultaneously  in an attempt to identify race conditions, etc.
     - License: GPL v2
+- fsrand.py: My own file system randomizer tool. It will perform a series of random operations on a file system, creating new files/directories and updating/removing existing ones.
+    - License: BSD 3-clause
 - bonnie++: Benchmarking tool that can also be used to test file system consistency. Runs on OSX and Linux.
     - License: GPL v2
 - iozone: Benchmarking tool that can also be used to test file system consistency. Runs on OSX and Linux.
