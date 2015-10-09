@@ -106,6 +106,7 @@
 #define _PATH_FORKSPECIFIER             ":"
 #define F_NOCACHE                       1000000
 
+#define open(path, oflag, mode)         open(path, oflag | O_BINARY, mode)
 #define signal(sig, func)               (0)
 
 #if defined(_WIN64)
