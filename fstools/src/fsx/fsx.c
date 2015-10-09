@@ -148,7 +148,7 @@ static inline int getpagesize(void)
 {
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
-    return sysinfo.dwPageSize;
+    return sysinfo.dwAllocationGranularity;
 }
 static inline int getpid(void)
 {
@@ -1046,7 +1046,8 @@ doread(unsigned offset, unsigned size)
 void
 check_eofpage(char *s, unsigned offset, char *p, int size)
 {
-	uintptr_t last_page, should_be_zero;
+#if !defined(_WIN32)
+    uintptr_t last_page, should_be_zero;
 
 	if (offset + size <= (file_size & ~page_mask))
 		return;
@@ -1068,6 +1069,7 @@ check_eofpage(char *s, unsigned offset, char *p, int size)
 			    (*(char *)should_be_zero));
 			failure(205);
 		}
+#endif
 }
 
 
