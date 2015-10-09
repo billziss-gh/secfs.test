@@ -100,6 +100,9 @@
 
 #if defined(_WIN32)
 #define MAXPATHLEN                      MAX_PATH
+#undef _IOLBF
+#define _IOLBF                          _IONBF
+
 #define _PATH_FORKSPECIFIER             ":"
 #define F_NOCACHE                       1000000
 
@@ -265,7 +268,7 @@ static inline int fsetxattr(int fd, const char *name, void *value, size_t size,
     	errno = ERANGE;
         return -1;
     }
-    PFILE_FULL_EA_INFORMATION eainfo = malloc(EA_SIZEMAX);
+    PFILE_FULL_EA_INFORMATION eainfo = malloc(easize);
     if (0 == eainfo)
     {
     	//errno = ENOMEM; /* malloc already sets this */
@@ -1701,6 +1704,10 @@ main(int argc, char **argv)
 	char* logpath = NULL;
 	eaname = argv[0];
 	int xml = 0;
+
+#if defined(_WIN32)
+    eaname = "fsx.exe"; /* Windows does not look certain characters in EA's */
+#endif
 
 	goodfile[0] = 0;
 	logfile[0] = 0;

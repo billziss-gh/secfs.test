@@ -1,2 +1,2 @@
 fsx.exe:
-	cl /W2 fsx.c win/*.c ntdll.lib
+	cl /W2 fsx.c win/*.c ntdll.lib /link /subsystem:console
