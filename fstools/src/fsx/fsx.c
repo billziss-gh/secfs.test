@@ -48,6 +48,24 @@
  *
  */
 
+#if defined(_WIN32)
+#include <windows.h>
+#include <io.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <errno.h>
+#include <stdint.h>
+#include "win/mman.h"
+#include "win/getopt.h"
+#else
 #include <sys/xattr.h>
 #include <getopt.h>
 #include <sys/types.h>
@@ -75,8 +93,167 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <libgen.h>
+#endif
 #ifdef XILOG
 # include <XILog/XILog.h>
+#endif
+
+#if defined(_WIN32)
+#define MAXPATHLEN                      MAX_PATH
+#define _PATH_FORKSPECIFIER             ":"
+#define F_NOCACHE                       1000000
+
+#define signal(sig, func)               (0)
+
+#if defined(_WIN64)
+typedef __int64 ssize_t;
+#define SSIZE_MAX                       _I64_MAX
+#else
+typedef int ssize_t;
+#define SSIZE_MAX                       INT_MAX
+#endif
+
+static inline void bzero(void *s, size_t n)
+{
+    memset(s, 0, n);
+}
+static inline int fcntl(int fildes, int cmd, ...)
+{
+    return 0;
+}
+static inline int fsync(int fd)
+{
+    return FlushFileBuffers((HANDLE)_get_osfhandle(fd)) ? 0 : -1;
+}
+static inline int ftruncate(int fd, off_t length)
+{
+    return _chsize(fd, length);
+}
+static inline int getopt_long(int argc, char **argv, char *optstring,
+    const struct option *longopts, int *longindex)
+{
+    return getopt(argc, argv, optstring);
+}
+static inline int getpagesize(void)
+{
+    SYSTEM_INFO sysinfo;
+    GetSystemInfo(&sysinfo);
+    return sysinfo.dwPageSize;
+}
+static inline int getpid(void)
+{
+    return GetCurrentProcessId();
+}
+static inline char *initstate(unsigned seed, char *state, size_t size)
+{
+    srand(seed);
+    return 0;
+}
+static inline char *setstate(const char *state)
+{
+    return 0;
+}
+static inline unsigned int sleep(unsigned int seconds)
+{
+    Sleep(seconds * 1000);
+    return 0;
+}
+static inline long random(void)
+{
+    return rand();
+}
+
+/* extended attribute implementation */
+#define EA_NAMEMAX                      (255)
+#define EA_SIZEMAX                      (64 * 1024)
+typedef struct _FILE_GET_EA_INFORMATION {
+    ULONG NextEntryOffset;
+    UCHAR EaNameLength;
+    CHAR EaName[1];
+} FILE_GET_EA_INFORMATION, *PFILE_GET_EA_INFORMATION;
+typedef struct _FILE_FULL_EA_INFORMATION {
+    ULONG NextEntryOffset;
+    UCHAR Flags;
+    UCHAR EaNameLength;
+    USHORT EaValueLength;
+    CHAR EaName[1];
+} FILE_FULL_EA_INFORMATION, *PFILE_FULL_EA_INFORMATION;
+typedef struct _IO_STATUS_BLOCK {
+    union {
+        NTSTATUS Status;
+        PVOID Pointer;
+    };
+    ULONG_PTR Information;
+} IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
+NTSYSAPI NTSTATUS NTAPI NtQueryEaFile(
+    IN HANDLE               FileHandle,
+    OUT PIO_STATUS_BLOCK    IoStatusBlock,
+    OUT PVOID               Buffer,
+    IN ULONG                Length,
+    IN BOOLEAN              ReturnSingleEntry,
+    IN PVOID                EaList OPTIONAL,
+    IN ULONG                EaListLength,
+    IN PULONG               EaIndex OPTIONAL,
+    IN BOOLEAN              RestartScan);
+NTSYSAPI NTSTATUS NTAPI NtSetEaFile(
+    IN HANDLE               FileHandle,
+    OUT PIO_STATUS_BLOCK    IoStatusBlock,
+    IN PVOID                EaBuffer,
+    IN ULONG                EaBufferSize);
+static inline ssize_t fgetxattr(int fd, const char *name, void *value, size_t size,
+    uint32_t position, int options)
+{
+    size_t namelen = strlen(name);
+    if (namelen > EA_NAMEMAX)
+        return -1;
+    PFILE_FULL_EA_INFORMATION eainfo = malloc(EA_SIZEMAX);
+    if (0 == eainfo)
+        return -1;
+    size_t geasize = sizeof(FILE_GET_EA_INFORMATION) + namelen;
+    PFILE_GET_EA_INFORMATION geainfo = _alloca(geasize);
+    geainfo->NextEntryOffset = 0;
+    geainfo->EaNameLength = (UCHAR)namelen;
+    memcpy(geainfo->EaName, name, geainfo->EaNameLength + 1);
+    IO_STATUS_BLOCK iosb;
+    ssize_t res = 0 <= NtQueryEaFile((HANDLE)_get_osfhandle(fd), &iosb,
+        eainfo, EA_SIZEMAX, TRUE, geainfo, geasize, 0, FALSE) ? eainfo->EaValueLength : -1;
+    if (0 < res)
+    {
+        if (res <= size)
+            memcpy(value, eainfo->EaName + eainfo->EaNameLength + 1, res);
+        else if (0 != value)
+            res = -1;
+    }
+    else
+        res = -1;
+    free(eainfo);
+    return res;
+}
+static inline int fsetxattr(int fd, const char *name, void *value, size_t size,
+    uint32_t position, int options)
+{
+    size_t namelen = strlen(name);
+    size_t easize = offsetof(FILE_FULL_EA_INFORMATION, EaName) + namelen + 1 + size;
+    if (namelen > EA_NAMEMAX || easize > EA_SIZEMAX)
+        return -1;
+    PFILE_FULL_EA_INFORMATION eainfo = malloc(EA_SIZEMAX);
+    if (0 == eainfo)
+        return -1;
+    eainfo->NextEntryOffset = 0;
+    eainfo->Flags = 0;
+    eainfo->EaNameLength = (UCHAR)namelen;
+    eainfo->EaValueLength = (USHORT)size;
+    memcpy(eainfo->EaName, name, eainfo->EaNameLength + 1);
+    memcpy(eainfo->EaName + eainfo->EaNameLength + 1, value, eainfo->EaValueLength);
+    IO_STATUS_BLOCK iosb;
+    int res = 0 <= NtSetEaFile((HANDLE)_get_osfhandle(fd), &iosb, eainfo, easize) ? 0 : -1;
+    free(eainfo);
+    return res;
+}
+static inline int fremovexattr(int fd, const char *name, int options)
+{
+    return fsetxattr(fd, name, 0, 0, 0, options);
+}
 #endif
 
 #if defined(__linux__)
@@ -94,7 +271,9 @@
     fsetxattr(fd, name, value, size, options)
 #define fremovexattr(fd, name, options)\
     fremovexattr(fd, name)
+#endif
 
+#if defined(_WIN64) || defined(__linux__)
 static size_t
 strlcpy(char *dst, const char *src, size_t maxlen) {
     const size_t srclen = strlen(src);
