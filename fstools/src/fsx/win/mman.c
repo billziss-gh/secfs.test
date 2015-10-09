@@ -18,10 +18,10 @@
 
 static int __map_mman_error(const DWORD err, const int deferr)
 {
+    int __cdecl __acrt_errno_from_os_error(unsigned long const oserrno);
     if (err == 0)
         return 0;
-    //TODO: implement
-    return deferr;
+    return __acrt_errno_from_os_error(err);
 }
 
 static DWORD __map_mmap_prot_page(const int prot)

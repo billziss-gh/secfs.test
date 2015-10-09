@@ -113,6 +113,12 @@ typedef int ssize_t;
 #define SSIZE_MAX                       INT_MAX
 #endif
 
+static inline int syserror(int err)
+{
+	void __cdecl __acrt_errno_map_os_error(unsigned long const oserrno);
+	__acrt_errno_map_os_error(0 == err ? GetLastError() : err);
+	return -1;
+}
 static inline void bzero(void *s, size_t n)
 {
     memset(s, 0, n);
@@ -123,7 +129,7 @@ static inline int fcntl(int fildes, int cmd, ...)
 }
 static inline int fsync(int fd)
 {
-    return FlushFileBuffers((HANDLE)_get_osfhandle(fd)) ? 0 : -1;
+    return FlushFileBuffers((HANDLE)_get_osfhandle(fd)) ? 0 : syserror(0);
 }
 static inline int ftruncate(int fd, off_t length)
 {
@@ -205,16 +211,23 @@ static inline ssize_t fgetxattr(int fd, const char *name, void *value, size_t si
 {
     size_t namelen = strlen(name);
     if (namelen > EA_NAMEMAX)
-        return -1;
+    {
+    	errno = ENAMETOOLONG;
+    	return -1;
+    }
     PFILE_FULL_EA_INFORMATION eainfo = malloc(EA_SIZEMAX);
     if (0 == eainfo)
+    {
+    	//errno = ENOMEM; /* malloc already sets this */
         return -1;
+    }
     size_t geasize = sizeof(FILE_GET_EA_INFORMATION) + namelen;
     PFILE_GET_EA_INFORMATION geainfo = _alloca(geasize);
     geainfo->NextEntryOffset = 0;
     geainfo->EaNameLength = (UCHAR)namelen;
     memcpy(geainfo->EaName, name, geainfo->EaNameLength + 1);
     IO_STATUS_BLOCK iosb;
+    int errno_ = 0;
     ssize_t res = 0 <= NtQueryEaFile((HANDLE)_get_osfhandle(fd), &iosb,
         eainfo, EA_SIZEMAX, TRUE, geainfo, geasize, 0, FALSE) ? eainfo->EaValueLength : -1;
     if (0 < res)
@@ -222,23 +235,42 @@ static inline ssize_t fgetxattr(int fd, const char *name, void *value, size_t si
         if (res <= size)
             memcpy(value, eainfo->EaName + eainfo->EaNameLength + 1, res);
         else if (0 != value)
+        {
+        	errno_ = ERANGE;
             res = -1;
+        }
     }
     else
+    {
+    	errno_ = EPERM; /* catchall error */
         res = -1;
+    }
     free(eainfo);
+    if (-1 == res)
+    	errno = errno_;
     return res;
 }
 static inline int fsetxattr(int fd, const char *name, void *value, size_t size,
     uint32_t position, int options)
 {
     size_t namelen = strlen(name);
+    if (namelen > EA_NAMEMAX)
+    {
+    	errno = ENAMETOOLONG;
+    	return -1;
+    }
     size_t easize = offsetof(FILE_FULL_EA_INFORMATION, EaName) + namelen + 1 + size;
-    if (namelen > EA_NAMEMAX || easize > EA_SIZEMAX)
+    if (easize > EA_SIZEMAX)
+    {
+    	errno = ERANGE;
         return -1;
+    }
     PFILE_FULL_EA_INFORMATION eainfo = malloc(EA_SIZEMAX);
     if (0 == eainfo)
+    {
+    	//errno = ENOMEM; /* malloc already sets this */
         return -1;
+    }
     eainfo->NextEntryOffset = 0;
     eainfo->Flags = 0;
     eainfo->EaNameLength = (UCHAR)namelen;
@@ -248,6 +280,8 @@ static inline int fsetxattr(int fd, const char *name, void *value, size_t size,
     IO_STATUS_BLOCK iosb;
     int res = 0 <= NtSetEaFile((HANDLE)_get_osfhandle(fd), &iosb, eainfo, easize) ? 0 : -1;
     free(eainfo);
+    if (-1 == res)
+    	errno = EPERM; /* catchall error */
     return res;
 }
 static inline int fremovexattr(int fd, const char *name, int options)
