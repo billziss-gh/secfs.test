@@ -105,9 +105,17 @@
 
 #define _PATH_FORKSPECIFIER             ":"
 #define F_NOCACHE                       1000000
+#define SIGHUP                          1000
+#define SIGPIPE                         1000
+#define SIGALRM                         1000
+#define SIGXCPU                         1000
+#define SIGXFSZ                         1000
+#define SIGVTALRM                       1000
+#define SIGUSR1                         1000
+#define SIGUSR2                         1000
 
 #define open(path, oflag, mode)         open(path, oflag | O_BINARY, mode)
-#define signal(sig, func)               (0)
+#define signal(sig, func)               (SIGINT == (sig) ? signal(sig, (_crt_signal_t)func) : 0)
 
 #if defined(_WIN64)
 typedef __int64 ssize_t;
