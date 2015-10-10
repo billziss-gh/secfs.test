@@ -154,24 +154,16 @@ static inline int getpid(void)
 {
     return GetCurrentProcessId();
 }
-static inline char *initstate(unsigned seed, char *state, size_t size)
-{
-    srand(seed);
-    return 0;
-}
-static inline char *setstate(const char *state)
-{
-    return 0;
-}
 static inline unsigned int sleep(unsigned int seconds)
 {
     Sleep(seconds * 1000);
     return 0;
 }
-static inline long random(void)
-{
-    return rand();
-}
+
+char *initstate(unsigned seed, char *state, size_t size);
+long random(void);
+char *setstate(const char *state);
+void srandom(unsigned seed);
 
 /* extended attribute implementation */
 #define EA_NAMEMAX                      (255)
