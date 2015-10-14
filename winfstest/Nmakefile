@@ -1,0 +1,2 @@
+fsx.exe:
+	cl /MT /W2 winfstest.c /link /subsystem:console
