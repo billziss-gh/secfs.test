@@ -1,8 +1,10 @@
 #include <windows.h>
-#include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
 
 static int do_CreateFile(int argc, wchar_t **argv);
+static int do_CreateDirectory(int argc, wchar_t **argv);
+static int do_GetFileInformation(int argc, wchar_t **argv);
 
 static void fail(const char *fmt, ...)
 {
@@ -103,6 +105,8 @@ struct api
 struct api apitab[] =
 {
     API(CreateFile),
+    API(CreateDirectory),
+    API(GetFileInformation),
 };
 static int apicmp(const void *p1, const void *p2)
 {
@@ -179,6 +183,70 @@ static int do_CreateFile(int argc, wchar_t **argv)
             "  );");
     HANDLE h = CreateFileW(argv[1], symval(argv[2]), symval(argv[3]), 0, symval(argv[5]), symval(argv[6]), 0);
     errprint(INVALID_HANDLE_VALUE != h);
+    return 0;
+}
+static int do_CreateDirectory(int argc, wchar_t **argv)
+{
+    if (argc != 3)
+        fail("prototype:\n"
+            "  BOOL WINAPI CreateDirectory(\n"
+            "    _In_     LPCTSTR               lpPathName,\n"
+            "    _In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes\n"
+            "  );");
+    BOOL r = CreateDirectoryW(argv[1], 0);
+    errprint(r);
+    return 0;
+}
+static const char *fileinfo_str(char *cbuf, size_t cbufsize,
+    LPBY_HANDLE_FILE_INFORMATION FileInfo)
+{
+    char btimebuf[32], atimebuf[32], mtimebuf[32];
+    SYSTEMTIME systime;
+    FileTimeToSystemTime(&FileInfo->ftCreationTime, &systime);
+    snprintf(btimebuf, sizeof btimebuf, "%d-%02d-%02dT%02d:%02d:%02dZ",
+        systime.wYear, systime.wMonth, systime.wDay,
+        systime.wHour, systime.wMinute, systime.wSecond);
+    FileTimeToSystemTime(&FileInfo->ftLastAccessTime, &systime);
+    snprintf(atimebuf, sizeof atimebuf, "%d-%02d-%02dT%02d:%02d:%02dZ",
+        systime.wYear, systime.wMonth, systime.wDay,
+        systime.wHour, systime.wMinute, systime.wSecond);
+    FileTimeToSystemTime(&FileInfo->ftLastWriteTime, &systime);
+    snprintf(mtimebuf, sizeof mtimebuf, "%d-%02d-%02dT%02d:%02d:%02dZ",
+        systime.wYear, systime.wMonth, systime.wDay,
+        systime.wHour, systime.wMinute, systime.wSecond);
+    snprintf(cbuf, cbufsize, "{FileAttributes=%" PRIx32 ", "
+        "CreationTime=%s, LastAccessTime=%s, LastWriteTime=%s, "
+        "VolumeSerialNumber=%" PRIx32 ", FileSize=%" PRIu64 ", NumberOfLinks=%u, FileIndex=%#" PRIx64 "}",
+        FileInfo->dwFileAttributes,
+        btimebuf, atimebuf, mtimebuf,
+        FileInfo->dwVolumeSerialNumber,
+        ((uint64_t)FileInfo->nFileSizeHigh << 32) | (uint64_t)FileInfo->nFileSizeLow,
+        FileInfo->nNumberOfLinks,
+        ((uint64_t)FileInfo->nFileIndexHigh << 32) | (uint64_t)FileInfo->nFileIndexLow);
+    return cbuf;
+}
+static int do_GetFileInformation(int argc, wchar_t **argv)
+{
+    if (argc != 2)
+        fail("usage: GetFileInformation FileName");
+    HANDLE h = CreateFileW(argv[1],
+        FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        0, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
+    if (INVALID_HANDLE_VALUE == h)
+        errprint(0);
+    else
+    {
+        BY_HANDLE_FILE_INFORMATION info;
+        BOOL r = GetFileInformationByHandle(h, &info);
+        if (r)
+        {
+            char cbuf[512];
+            printf("0 %s", fileinfo_str(cbuf, sizeof cbuf, &info));
+        }
+        else
+            errprint(0);
+        CloseHandle(h);
+    }
     return 0;
 }
 static void usage()
