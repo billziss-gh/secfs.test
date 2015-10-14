@@ -5,6 +5,7 @@
 static int do_CreateFile(int argc, wchar_t **argv);
 static int do_CreateDirectory(int argc, wchar_t **argv);
 static int do_GetFileInformation(int argc, wchar_t **argv);
+static int do_FindFiles(int argc, wchar_t **argv);
 
 static void fail(const char *fmt, ...)
 {
@@ -107,6 +108,7 @@ struct api apitab[] =
     API(CreateFile),
     API(CreateDirectory),
     API(GetFileInformation),
+    API(FindFiles),
 };
 static int apicmp(const void *p1, const void *p2)
 {
@@ -197,34 +199,6 @@ static int do_CreateDirectory(int argc, wchar_t **argv)
     errprint(r);
     return 0;
 }
-static const char *fileinfo_str(char *cbuf, size_t cbufsize,
-    LPBY_HANDLE_FILE_INFORMATION FileInfo)
-{
-    char btimebuf[32], atimebuf[32], mtimebuf[32];
-    SYSTEMTIME systime;
-    FileTimeToSystemTime(&FileInfo->ftCreationTime, &systime);
-    snprintf(btimebuf, sizeof btimebuf, "%d-%02d-%02dT%02d:%02d:%02dZ",
-        systime.wYear, systime.wMonth, systime.wDay,
-        systime.wHour, systime.wMinute, systime.wSecond);
-    FileTimeToSystemTime(&FileInfo->ftLastAccessTime, &systime);
-    snprintf(atimebuf, sizeof atimebuf, "%d-%02d-%02dT%02d:%02d:%02dZ",
-        systime.wYear, systime.wMonth, systime.wDay,
-        systime.wHour, systime.wMinute, systime.wSecond);
-    FileTimeToSystemTime(&FileInfo->ftLastWriteTime, &systime);
-    snprintf(mtimebuf, sizeof mtimebuf, "%d-%02d-%02dT%02d:%02d:%02dZ",
-        systime.wYear, systime.wMonth, systime.wDay,
-        systime.wHour, systime.wMinute, systime.wSecond);
-    snprintf(cbuf, cbufsize, "{FileAttributes=%" PRIx32 ", "
-        "CreationTime=%s, LastAccessTime=%s, LastWriteTime=%s, "
-        "VolumeSerialNumber=%" PRIx32 ", FileSize=%" PRIu64 ", NumberOfLinks=%u, FileIndex=%#" PRIx64 "}",
-        FileInfo->dwFileAttributes,
-        btimebuf, atimebuf, mtimebuf,
-        FileInfo->dwVolumeSerialNumber,
-        ((uint64_t)FileInfo->nFileSizeHigh << 32) | (uint64_t)FileInfo->nFileSizeLow,
-        FileInfo->nNumberOfLinks,
-        ((uint64_t)FileInfo->nFileIndexHigh << 32) | (uint64_t)FileInfo->nFileIndexLow);
-    return cbuf;
-}
 static int do_GetFileInformation(int argc, wchar_t **argv)
 {
     if (argc != 2)
@@ -236,16 +210,78 @@ static int do_GetFileInformation(int argc, wchar_t **argv)
         errprint(0);
     else
     {
-        BY_HANDLE_FILE_INFORMATION info;
-        BOOL r = GetFileInformationByHandle(h, &info);
+        BY_HANDLE_FILE_INFORMATION FileInfo;
+        BOOL r = GetFileInformationByHandle(h, &FileInfo);
         if (r)
         {
-            char cbuf[512];
-            printf("0 %s", fileinfo_str(cbuf, sizeof cbuf, &info));
+            char btimebuf[32], atimebuf[32], mtimebuf[32];
+            SYSTEMTIME systime;
+            FileTimeToSystemTime(&FileInfo.ftCreationTime, &systime);
+            snprintf(btimebuf, sizeof btimebuf, "%d-%02d-%02dT%02d:%02d:%02dZ",
+                systime.wYear, systime.wMonth, systime.wDay,
+                systime.wHour, systime.wMinute, systime.wSecond);
+            FileTimeToSystemTime(&FileInfo.ftLastAccessTime, &systime);
+            snprintf(atimebuf, sizeof atimebuf, "%d-%02d-%02dT%02d:%02d:%02dZ",
+                systime.wYear, systime.wMonth, systime.wDay,
+                systime.wHour, systime.wMinute, systime.wSecond);
+            FileTimeToSystemTime(&FileInfo.ftLastWriteTime, &systime);
+            snprintf(mtimebuf, sizeof mtimebuf, "%d-%02d-%02dT%02d:%02d:%02dZ",
+                systime.wYear, systime.wMonth, systime.wDay,
+                systime.wHour, systime.wMinute, systime.wSecond);
+            printf("0 FileAttributes=%" PRIx32 " "
+                "CreationTime=%s LastAccessTime=%s LastWriteTime=%s "
+                "VolumeSerialNumber=%" PRIx32 " FileSize=%" PRIu64 " NumberOfLinks=%u FileIndex=%#" PRIx64
+                "\n",
+                FileInfo.dwFileAttributes,
+                btimebuf, atimebuf, mtimebuf,
+                FileInfo.dwVolumeSerialNumber,
+                ((uint64_t)FileInfo.nFileSizeHigh << 32) | (uint64_t)FileInfo.nFileSizeLow,
+                FileInfo.nNumberOfLinks,
+                ((uint64_t)FileInfo.nFileIndexHigh << 32) | (uint64_t)FileInfo.nFileIndexLow);
         }
         else
             errprint(0);
         CloseHandle(h);
+    }
+    return 0;
+}
+static int do_FindFiles(int argc, wchar_t **argv)
+{
+    if (argc != 2)
+        fail("usage: FindFiles FileName");
+    WIN32_FIND_DATAW FindData;
+    HANDLE h = FindFirstFileW(argv[1], &FindData);
+    if (INVALID_HANDLE_VALUE == h)
+        errprint(0);
+    else
+    {
+        printf("0\n");
+        do
+        {
+            char btimebuf[32], atimebuf[32], mtimebuf[32];
+            SYSTEMTIME systime;
+            FileTimeToSystemTime(&FindData.ftCreationTime, &systime);
+            snprintf(btimebuf, sizeof btimebuf, "%d-%02d-%02dT%02d:%02d:%02dZ",
+                systime.wYear, systime.wMonth, systime.wDay,
+                systime.wHour, systime.wMinute, systime.wSecond);
+            FileTimeToSystemTime(&FindData.ftLastAccessTime, &systime);
+            snprintf(atimebuf, sizeof atimebuf, "%d-%02d-%02dT%02d:%02d:%02dZ",
+                systime.wYear, systime.wMonth, systime.wDay,
+                systime.wHour, systime.wMinute, systime.wSecond);
+            FileTimeToSystemTime(&FindData.ftLastWriteTime, &systime);
+            snprintf(mtimebuf, sizeof mtimebuf, "%d-%02d-%02dT%02d:%02d:%02dZ",
+                systime.wYear, systime.wMonth, systime.wDay,
+                systime.wHour, systime.wMinute, systime.wSecond);
+            printf("FileAttributes=%" PRIx32 " "
+                "CreationTime=%s LastAccessTime=%s LastWriteTime=%s "
+                "FileSize=%" PRIu64 " FileName=%S"
+                "\n",
+                FindData.dwFileAttributes,
+                btimebuf, atimebuf, mtimebuf,
+                ((uint64_t)FindData.nFileSizeHigh << 32) | (uint64_t)FindData.nFileSizeLow,
+                FindData.cFileName);
+        } while (FindNextFileW(h, &FindData));
+        FindClose(h);
     }
     return 0;
 }
