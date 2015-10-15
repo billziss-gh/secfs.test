@@ -152,9 +152,7 @@ struct err
 };
 struct err errtab[] =
 {
-    ERR(ERROR_SUCCESS),
-    ERR(ERROR_INVALID_FUNCTION),
-    ERR(ERROR_FILE_NOT_FOUND),
+#include "winerror.i"
 };
 static int errcmp(const void *p1, const void *p2)
 {
@@ -285,8 +283,7 @@ static int do_SetFileTime(int argc, wchar_t **argv)
         errprint(0);
     else
     {
-        FILETIME *CreationTime = 0, *LastAccessTime = 0, *LastWriteTime = 0;
-        FILETIME ft[3];
+        FILETIME *CreationTime = 0, *LastAccessTime = 0, *LastWriteTime = 0, ft[3];
         SYSTEMTIME systime;
         if (0 < swscanf(argv[2], L"%hd-%02hd-%02hdT%02hd:%02hd:%02hd",
             &systime.wYear, &systime.wMonth, &systime.wDay,
