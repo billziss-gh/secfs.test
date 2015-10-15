@@ -33,13 +33,16 @@
 
 import os, subprocess, sys
 
-__all__ = ["fstest", "expect", "testdone", "testline"]
+__all__ = ["fstest", "expect", "testline", "testeval", "testdone"]
 
 ntests = 0
 def testline(ok, diag = ""):
 	global ntests
 	ntests += 1
 	print "%sok %s%s%s" % ("" if ok else "not ", ntests, " - " if diag else "", diag)
+def testeval(expr):
+	f = sys._getframe(1)
+	testline(eval(expr, f.f_globals, f.f_locals), expr)
 def testdone():
 	global ntests
 	print "1..%s" % ntests
@@ -66,3 +69,4 @@ def expect(exp, cmd):
 		testline(1, "expect %s %s" % (exp, cmd))
 	else:
 		testline(0, "expect %s %s - got %s" % (exp, cmd, err))
+	return err, res
