@@ -3,9 +3,15 @@
 #include <stdio.h>
 
 static int do_CreateFile(int argc, wchar_t **argv);
+static int do_DeleteFile(int argc, wchar_t **argv);
 static int do_CreateDirectory(int argc, wchar_t **argv);
+static int do_RemoveDirectory(int argc, wchar_t **argv);
 static int do_GetFileInformation(int argc, wchar_t **argv);
+static int do_SetFileAttributes(int argc, wchar_t **argv);
+static int do_SetFileTime(int argc, wchar_t **argv);
+static int do_SetEndOfFile(int argc, wchar_t **argv);
 static int do_FindFiles(int argc, wchar_t **argv);
+static int do_MoveFileEx(int argc, wchar_t **argv);
 
 static void fail(const char *fmt, ...)
 {
@@ -55,6 +61,12 @@ struct sym symtab[] =
     SYM(FILE_ATTRIBUTE_VIRTUAL),
     SYM(FILE_ATTRIBUTE_NO_SCRUB_DATA),
     SYM(FILE_ATTRIBUTE_EA),
+    SYM(MOVEFILE_REPLACE_EXISTING),
+    SYM(MOVEFILE_COPY_ALLOWED),
+    SYM(MOVEFILE_DELAY_UNTIL_REBOOT),
+    SYM(MOVEFILE_WRITE_THROUGH),
+    SYM(MOVEFILE_CREATE_HARDLINK),
+    SYM(MOVEFILE_FAIL_IF_NOT_TRACKABLE),
 };
 static int symcmp(const void *p1, const void *p2)
 {
@@ -106,9 +118,15 @@ struct api
 struct api apitab[] =
 {
     API(CreateFile),
+    API(DeleteFile),
     API(CreateDirectory),
+    API(RemoveDirectory),
     API(GetFileInformation),
+    API(SetFileAttributes),
+    API(SetFileTime),
+    API(SetEndOfFile),
     API(FindFiles),
+    API(MoveFileEx),
 };
 static int apicmp(const void *p1, const void *p2)
 {
@@ -187,6 +205,17 @@ static int do_CreateFile(int argc, wchar_t **argv)
     errprint(INVALID_HANDLE_VALUE != h);
     return 0;
 }
+static int do_DeleteFile(int argc, wchar_t **argv)
+{
+    if (argc != 2)
+        fail("prototype:\n"
+            "  BOOL WINAPI DeleteFile(\n"
+            "    _In_ LPCTSTR lpFileName\n"
+            "  );");
+    BOOL r = DeleteFileW(argv[1]);
+    errprint(r);
+    return 0;
+}
 static int do_CreateDirectory(int argc, wchar_t **argv)
 {
     if (argc != 3)
@@ -196,6 +225,17 @@ static int do_CreateDirectory(int argc, wchar_t **argv)
             "    _In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes\n"
             "  );");
     BOOL r = CreateDirectoryW(argv[1], 0);
+    errprint(r);
+    return 0;
+}
+static int do_RemoveDirectory(int argc, wchar_t **argv)
+{
+    if (argc != 2)
+        fail("prototype:\n"
+            "  BOOL WINAPI RemoveDirectory(\n"
+            "    _In_ LPCTSTR lpPathName\n"
+            "  );");
+    BOOL r = RemoveDirectoryW(argv[1]);
     errprint(r);
     return 0;
 }
@@ -245,6 +285,41 @@ static int do_GetFileInformation(int argc, wchar_t **argv)
     }
     return 0;
 }
+static int do_SetFileAttributes(int argc, wchar_t **argv)
+{
+    if (argc != 3)
+        fail("prototype:\n"
+            "  BOOL WINAPI SetFileAttributes(\n"
+            "    _In_ LPCTSTR lpFileName,\n"
+            "    _In_ DWORD   dwFileAttributes\n"
+            ");");
+    BOOL r = SetFileAttributesW(argv[1], symval(argv[2]));
+    errprint(r);
+    return 0;
+}
+static int do_SetFileTime(int argc, wchar_t **argv)
+{
+    return 0;
+}
+static int do_SetEndOfFile(int argc, wchar_t **argv)
+{
+    if (argc != 2)
+        fail("usage: SetEndOfFile FileName Length");
+    HANDLE h = CreateFileW(argv[1],
+        GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        0, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
+    if (INVALID_HANDLE_VALUE == h)
+        errprint(0);
+    else
+    {
+        FILE_END_OF_FILE_INFO EofInfo;
+        EofInfo.EndOfFile.QuadPart = wcstoull(argv[2], 0, 0);
+        BOOL r = SetFileInformationByHandle(h, FileEndOfFileInfo, &EofInfo, sizeof EofInfo);
+        errprint(r);
+        CloseHandle(h);
+    }
+    return 0;
+}
 static int do_FindFiles(int argc, wchar_t **argv)
 {
     if (argc != 2)
@@ -283,6 +358,19 @@ static int do_FindFiles(int argc, wchar_t **argv)
         } while (FindNextFileW(h, &FindData));
         FindClose(h);
     }
+    return 0;
+}
+static int do_MoveFileEx(int argc, wchar_t **argv)
+{
+    if (argc != 4)
+        fail("prototype:\n"
+            "  BOOL WINAPI MoveFileEx(\n"
+            "    _In_     LPCTSTR lpExistingFileName,\n"
+            "    _In_opt_ LPCTSTR lpNewFileName,\n"
+            "    _In_     DWORD   dwFlags\n"
+            "  );");
+    BOOL r = MoveFileExW(argv[1], argv[2], symval(argv[3]));
+    errprint(r);
     return 0;
 }
 static void usage()
