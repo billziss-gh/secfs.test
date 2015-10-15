@@ -66,6 +66,11 @@ def fstest(cmd):
 			k, v = p.split("=", 2)
 			if v.startswith('"') and v.endswith('"') and len(v) >= 2:
 				v = v[1:-1]
+			else:
+				try:
+					v = int(v, 0)
+				except:
+					pass
 			d[k] = v
 	return out[0], res
 def expect(exp, cmd):
