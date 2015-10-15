@@ -33,6 +33,8 @@
 
 import os, subprocess, sys
 
+__all__ = ["endplan", "expect"]
+
 fstest_exe = os.path.splitext(os.path.realpath(__file__))[0] + ".exe"
 def fstest(cmd):
 	arg = cmd.split() if hasattr(cmd, "split") else list(cmd)
@@ -52,11 +54,13 @@ def fstest(cmd):
 ntests = 0
 def endplan():
 	global ntests
-	print ntests
+	print "1..%s" % ntests
 	ntests = 0
 def expect(exp, cmd):
+	global ntests
 	err, res = fstest(cmd)
+	ntests += 1
 	if str(exp) == err:
-		print "ok %s - expect %s %s" % (0, exp, cmd)
+		print "ok %s - expect %s %s" % (ntests, exp, cmd)
 	else:
-		print "not ok %s - expect %s %s - got %s" % (0, exp, cmd, err)
+		print "not ok %s - expect %s %s - got %s" % (ntests, exp, cmd, err)
