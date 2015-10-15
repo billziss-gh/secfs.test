@@ -191,16 +191,7 @@ static void errprint(int success)
 static int do_CreateFile(int argc, wchar_t **argv)
 {
     if (argc != 8)
-        fail("prototype:\n"
-            "  HANDLE WINAPI CreateFile(\n"
-            "    _In_     LPCTSTR               lpFileName,\n"
-            "    _In_     DWORD                 dwDesiredAccess,\n"
-            "    _In_     DWORD                 dwShareMode,\n"
-            "    _In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes,\n"
-            "    _In_     DWORD                 dwCreationDisposition,\n"
-            "    _In_     DWORD                 dwFlagsAndAttributes,\n"
-            "    _In_opt_ HANDLE                hTemplateFile\n"
-            "  );");
+        fail("usage: CreateFile FileName DesiredAccess ShareMode 0 CreationDisposition FlagsAndAttributes 0");
     HANDLE h = CreateFileW(argv[1], symval(argv[2]), symval(argv[3]), 0, symval(argv[5]), symval(argv[6]), 0);
     errprint(INVALID_HANDLE_VALUE != h);
     return 0;
@@ -208,10 +199,7 @@ static int do_CreateFile(int argc, wchar_t **argv)
 static int do_DeleteFile(int argc, wchar_t **argv)
 {
     if (argc != 2)
-        fail("prototype:\n"
-            "  BOOL WINAPI DeleteFile(\n"
-            "    _In_ LPCTSTR lpFileName\n"
-            "  );");
+        fail("usage: DeleteFile FileName");
     BOOL r = DeleteFileW(argv[1]);
     errprint(r);
     return 0;
@@ -219,11 +207,7 @@ static int do_DeleteFile(int argc, wchar_t **argv)
 static int do_CreateDirectory(int argc, wchar_t **argv)
 {
     if (argc != 3)
-        fail("prototype:\n"
-            "  BOOL WINAPI CreateDirectory(\n"
-            "    _In_     LPCTSTR               lpPathName,\n"
-            "    _In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes\n"
-            "  );");
+        fail("usage: CreateDirectory PathName 0");
     BOOL r = CreateDirectoryW(argv[1], 0);
     errprint(r);
     return 0;
@@ -231,10 +215,7 @@ static int do_CreateDirectory(int argc, wchar_t **argv)
 static int do_RemoveDirectory(int argc, wchar_t **argv)
 {
     if (argc != 2)
-        fail("prototype:\n"
-            "  BOOL WINAPI RemoveDirectory(\n"
-            "    _In_ LPCTSTR lpPathName\n"
-            "  );");
+        fail("usage: RemoveDirectory PathName");
     BOOL r = RemoveDirectoryW(argv[1]);
     errprint(r);
     return 0;
@@ -288,11 +269,7 @@ static int do_GetFileInformation(int argc, wchar_t **argv)
 static int do_SetFileAttributes(int argc, wchar_t **argv)
 {
     if (argc != 3)
-        fail("prototype:\n"
-            "  BOOL WINAPI SetFileAttributes(\n"
-            "    _In_ LPCTSTR lpFileName,\n"
-            "    _In_ DWORD   dwFileAttributes\n"
-            ");");
+        fail("usage: SetFileAttributes FileName FileAttributes");
     BOOL r = SetFileAttributesW(argv[1], symval(argv[2]));
     errprint(r);
     return 0;
@@ -390,12 +367,7 @@ static int do_FindFiles(int argc, wchar_t **argv)
 static int do_MoveFileEx(int argc, wchar_t **argv)
 {
     if (argc != 4)
-        fail("prototype:\n"
-            "  BOOL WINAPI MoveFileEx(\n"
-            "    _In_     LPCTSTR lpExistingFileName,\n"
-            "    _In_opt_ LPCTSTR lpNewFileName,\n"
-            "    _In_     DWORD   dwFlags\n"
-            "  );");
+        fail("usage: MoveFileEx ExistingFileName NewFileName Flags");
     BOOL r = MoveFileExW(argv[1], argv[2], symval(argv[3]));
     errprint(r);
     return 0;
