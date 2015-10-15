@@ -10,5 +10,6 @@ e, r = expect(0, "GetFileInformation %s" % name)
 testeval('r[0]["FileAttributes"] == 0x10')
 expect("ERROR_ACCESS_DENIED", "DeleteFile %s" % name)
 expect(0, "RemoveDirectory %s" % name)
+expect("ERROR_FILE_NOT_FOUND", "RemoveDirectory %s" % name)
 
 testdone()
