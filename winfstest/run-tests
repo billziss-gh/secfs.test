@@ -1,0 +1,4 @@
+#!/bin/bash
+
+ProgPath=$(dirname "$0")
+PYTHONPATH="$ProgPath" prove -fr "$ProgPath/t"
