@@ -79,7 +79,7 @@ def fstest(cmd):
 def expect(cmd, exp):
     err, res = fstest(cmd)
     if str(exp) == err:
-        testline(1, "expect %s %s" % (exp, cmd))
+        testline(1, "expect \"%s\" %s" % (cmd, exp))
     else:
-        testline(0, "expect %s %s - got %s" % (exp, cmd, err))
+        testline(0, "expect \"%s\" %s - got %s" % (cmd, exp, err))
     return err, res
