@@ -64,6 +64,8 @@ def fstest(cmd):
 		res.append(d)
 		for p in l.split():
 			k, v = p.split("=", 2)
+			if v.startswith('"') and v.endswith('"') and len(v) >= 2:
+				v = v[1:-1]
 			d[k] = v
 	return out[0], res
 def expect(exp, cmd):
