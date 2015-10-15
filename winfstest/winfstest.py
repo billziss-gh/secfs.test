@@ -40,9 +40,10 @@ def testline(ok, diag = ""):
     global ntests
     ntests += 1
     print "%sok %s%s%s" % ("" if ok else "not ", ntests, " - " if diag else "", diag)
+testeval_globals = {}
 def testeval(expr):
     f = sys._getframe(1)
-    testline(eval(expr, f.f_globals, f.f_locals), expr)
+    testline(eval(expr, testeval_globals, f.f_locals), expr)
 def testdone():
     global ntests
     print "1..%s" % ntests
@@ -72,8 +73,10 @@ def fstest(cmd):
                 except:
                     pass
             d[k] = v
+    testeval_globals["e"] = out[0]
+    testeval_globals["r"] = res
     return out[0], res
-def expect(exp, cmd):
+def expect(cmd, exp):
     err, res = fstest(cmd)
     if str(exp) == err:
         testline(1, "expect %s %s" % (exp, cmd))

@@ -4,16 +4,16 @@ from winfstest import *
 
 name = uniqname()
 
-expect(0, "CreateFile %s GENERIC_WRITE 0 0 CREATE_NEW FILE_ATTRIBUTE_NORMAL 0" % name)
-expect("ERROR_ALREADY_EXISTS", "CreateDirectory %s 0" % name)
-expect(0, "DeleteFile %s" % name)
+expect("CreateFile %s GENERIC_WRITE 0 0 CREATE_NEW FILE_ATTRIBUTE_NORMAL 0" % name, 0)
+expect("CreateDirectory %s 0" % name, "ERROR_ALREADY_EXISTS")
+expect("DeleteFile %s" % name, 0)
 
-expect(0, "CreateDirectory %s 0" % name)
-expect("ERROR_ALREADY_EXISTS", "CreateDirectory %s 0" % name)
-e, r = expect(0, "GetFileInformation %s" % name)
+expect("CreateDirectory %s 0" % name, 0)
+expect("CreateDirectory %s 0" % name, "ERROR_ALREADY_EXISTS")
+expect("GetFileInformation %s" % name, 0)
 testeval('r[0]["FileAttributes"] == 0x10')
-expect("ERROR_ACCESS_DENIED", "DeleteFile %s" % name)
-expect(0, "RemoveDirectory %s" % name)
-expect("ERROR_FILE_NOT_FOUND", "RemoveDirectory %s" % name)
+expect("DeleteFile %s" % name, "ERROR_ACCESS_DENIED")
+expect("RemoveDirectory %s" % name, 0)
+expect("RemoveDirectory %s" % name, "ERROR_FILE_NOT_FOUND")
 
 testdone()
