@@ -33,7 +33,7 @@
 
 import os, random, subprocess, sys
 
-__all__ = ["testline", "testeval", "testdone", "uniqname", "fstest", "expect"]
+__all__ = ["testline", "testeval", "testdone", "uniqname", "fstest", "expect", "expcnd"]
 
 ntests = 0
 def testline(ok, diag = ""):
@@ -82,4 +82,8 @@ def expect(cmd, exp):
         testline(1, "expect \"%s\" %s" % (cmd, exp))
     else:
         testline(0, "expect \"%s\" %s - got %s" % (cmd, exp, err))
+    return err, res
+def expcnd(cmd, exp):
+    err, res = expect(cmd, 0)
+    testeval(exp)
     return err, res
