@@ -2,10 +2,12 @@
 
 from winfstest import *
 
-expect(0, "CreateDirectory foo 0")
-e, r = expect(0, "GetFileInformation foo")
+name = uniqname()
+
+expect(0, "CreateDirectory %s 0" % name)
+e, r = expect(0, "GetFileInformation %s" % name)
 testeval('r[0]["FileAttributes"] == "0x10"')
-expect("ERROR_ACCESS_DENIED", "DeleteFile foo")
-expect(0, "RemoveDirectory foo")
+expect("ERROR_ACCESS_DENIED", "DeleteFile %s" % name)
+expect(0, "RemoveDirectory %s" % name)
 
 testdone()

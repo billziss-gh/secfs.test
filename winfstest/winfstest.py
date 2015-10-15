@@ -31,9 +31,9 @@
 # (INCLUDING NEGLIGENCE  OR OTHERWISE) ARISING IN  ANY WAY OUT OF  THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os, subprocess, sys
+import os, random, subprocess, sys
 
-__all__ = ["fstest", "expect", "testline", "testeval", "testdone"]
+__all__ = ["testline", "testeval", "testdone", "uniqname", "fstest", "expect"]
 
 ntests = 0
 def testline(ok, diag = ""):
@@ -47,6 +47,9 @@ def testdone():
 	global ntests
 	print "1..%s" % ntests
 	ntests = 0
+
+def uniqname():
+	return "%08x" % random.randint(1, 2 ** 32)
 
 fstest_exe = os.path.splitext(os.path.realpath(__file__))[0] + ".exe"
 def fstest(cmd):
