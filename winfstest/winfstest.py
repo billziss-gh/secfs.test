@@ -33,7 +33,17 @@
 
 import os, subprocess, sys
 
-__all__ = ["endplan", "expect"]
+__all__ = ["fstest", "expect", "testdone", "testline"]
+
+ntests = 0
+def testline(ok, diag = ""):
+	global ntests
+	ntests += 1
+	print "%sok %s%s%s" % ("" if ok else "not ", ntests, " - " if diag else "", diag)
+def testdone():
+	global ntests
+	print "1..%s" % ntests
+	ntests = 0
 
 fstest_exe = os.path.splitext(os.path.realpath(__file__))[0] + ".exe"
 def fstest(cmd):
@@ -50,17 +60,9 @@ def fstest(cmd):
 			k, v = p.split("=", 2)
 			d[k] = v
 	return out[0], res
-
-ntests = 0
-def endplan():
-	global ntests
-	print "1..%s" % ntests
-	ntests = 0
 def expect(exp, cmd):
-	global ntests
 	err, res = fstest(cmd)
-	ntests += 1
 	if str(exp) == err:
-		print "ok %s - expect %s %s" % (ntests, exp, cmd)
+		testline(1, "expect %s %s" % (exp, cmd))
 	else:
-		print "not ok %s - expect %s %s - got %s" % (ntests, exp, cmd, err)
+		testline(0, "expect %s %s - got %s" % (exp, cmd, err))
