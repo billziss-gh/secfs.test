@@ -57,18 +57,18 @@ static void fail(const char *fmt, ...)
     exit(1);
 }
 
-#define SYM(n)							{ L#n, n }
+#define SYM(n)                          { L#n, n }
 struct sym
 {
-	const wchar_t *name;
-	DWORD value;
+    const wchar_t *name;
+    DWORD value;
 };
 struct sym symtab[] =
 {
-	SYM(GENERIC_ALL),
-	SYM(GENERIC_EXECUTE),
-	SYM(GENERIC_READ),
-	SYM(GENERIC_WRITE),
+    SYM(GENERIC_ALL),
+    SYM(GENERIC_EXECUTE),
+    SYM(GENERIC_READ),
+    SYM(GENERIC_WRITE),
     SYM(FILE_SHARE_READ),
     SYM(FILE_SHARE_WRITE),
     SYM(FILE_SHARE_DELETE),
@@ -104,9 +104,9 @@ struct sym symtab[] =
 };
 static int symcmp(const void *p1, const void *p2)
 {
-	const struct sym *sym1 = (const struct sym *)p1;
-	const struct sym *sym2 = (const struct sym *)p2;
-	return wcscmp(sym1->name, sym2->name);
+    const struct sym *sym1 = (const struct sym *)p1;
+    const struct sym *sym2 = (const struct sym *)p2;
+    return wcscmp(sym1->name, sym2->name);
 }
 static void syminit(void)
 {
@@ -143,7 +143,7 @@ static DWORD symval(const wchar_t *name)
     return value;
 }
 
-#define API(n)							{ L#n, do_##n }
+#define API(n)                          { L#n, do_##n }
 struct api
 {
     const wchar_t *name;
@@ -164,9 +164,9 @@ struct api apitab[] =
 };
 static int apicmp(const void *p1, const void *p2)
 {
-	const struct api *api1 = (const struct api *)p1;
-	const struct api *api2 = (const struct api *)p2;
-	return wcscmp(api1->name, api2->name);
+    const struct api *api1 = (const struct api *)p1;
+    const struct api *api2 = (const struct api *)p2;
+    return wcscmp(api1->name, api2->name);
 }
 static void apiinit(void)
 {
@@ -178,11 +178,11 @@ static struct api *apiget(const wchar_t *name)
     return bsearch(&apikey, apitab, sizeof apitab / sizeof apitab[0], sizeof apitab[0], apicmp);
 }
 
-#define ERR(n)							{ L#n, n }
+#define ERR(n)                          { L#n, n }
 struct err
 {
-	const wchar_t *name;
-	DWORD value;
+    const wchar_t *name;
+    DWORD value;
 };
 struct err errtab[] =
 {
@@ -190,9 +190,9 @@ struct err errtab[] =
 };
 static int errcmp(const void *p1, const void *p2)
 {
-	const struct err *err1 = (const struct err *)p1;
-	const struct err *err2 = (const struct err *)p2;
-	return (int)err1->value - (int)err2->value;
+    const struct err *err1 = (const struct err *)p1;
+    const struct err *err2 = (const struct err *)p2;
+    return (int)err1->value - (int)err2->value;
 }
 static void errinit(void)
 {
@@ -442,5 +442,5 @@ int wmain(int argc, wchar_t **argv)
     struct api *api = apiget(argv[0]);
     if (0 == api)
         fail("cannot find API %S", argv[0]);
-	return api->fn(argc, argv);
+    return api->fn(argc, argv);
 }
