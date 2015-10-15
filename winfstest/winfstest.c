@@ -247,9 +247,9 @@ static int do_GetFileInformation(int argc, wchar_t **argv)
             snprintf(mtimebuf, sizeof mtimebuf, "%d-%02d-%02dT%02d:%02d:%02dZ",
                 systime.wYear, systime.wMonth, systime.wDay,
                 systime.wHour, systime.wMinute, systime.wSecond);
-            printf("0 FileAttributes=%" PRIx32 " "
+            printf("0 FileAttributes=%#" PRIx32 " "
                 "CreationTime=%s LastAccessTime=%s LastWriteTime=%s "
-                "VolumeSerialNumber=%" PRIx32 " FileSize=%" PRIu64 " NumberOfLinks=%u FileIndex=%#" PRIx64
+                "VolumeSerialNumber=%#" PRIx32 " FileSize=%" PRIu64 " NumberOfLinks=%u FileIndex=%#" PRIx64
                 "\n",
                 FileInfo.dwFileAttributes,
                 btimebuf, atimebuf, mtimebuf,
@@ -285,26 +285,32 @@ static int do_SetFileTime(int argc, wchar_t **argv)
     {
         FILETIME *CreationTime = 0, *LastAccessTime = 0, *LastWriteTime = 0, ft[3];
         SYSTEMTIME systime;
+        memset(&systime, 0, sizeof systime);
+        systime.wMonth = systime.wDay = 1;
         if (0 < swscanf(argv[2], L"%hd-%02hd-%02hdT%02hd:%02hd:%02hd",
             &systime.wYear, &systime.wMonth, &systime.wDay,
             &systime.wHour, &systime.wMinute, &systime.wSecond))
         {
-            CreationTime = &ft[0];
-            SystemTimeToFileTime(&systime, CreationTime);
+            if (SystemTimeToFileTime(&systime, &ft[0]))
+                CreationTime = &ft[0];
         }
+        memset(&systime, 0, sizeof systime);
+        systime.wMonth = systime.wDay = 1;
         if (0 < swscanf(argv[3], L"%hd-%02hd-%02hdT%02hd:%02hd:%02hd",
             &systime.wYear, &systime.wMonth, &systime.wDay,
             &systime.wHour, &systime.wMinute, &systime.wSecond))
         {
-            LastAccessTime = &ft[1];
-            SystemTimeToFileTime(&systime, LastAccessTime);
+            if (SystemTimeToFileTime(&systime, &ft[1]))
+                LastAccessTime = &ft[1];
         }
+        memset(&systime, 0, sizeof systime);
+        systime.wMonth = systime.wDay = 1;
         if (0 < swscanf(argv[4], L"%hd-%02hd-%02hdT%02hd:%02hd:%02hd",
             &systime.wYear, &systime.wMonth, &systime.wDay,
             &systime.wHour, &systime.wMinute, &systime.wSecond))
         {
-            LastWriteTime = &ft[2];
-            SystemTimeToFileTime(&systime, LastWriteTime);
+            if (SystemTimeToFileTime(&systime, &ft[2]))
+                LastWriteTime = &ft[2];
         }
         BOOL r = SetFileTime(h, CreationTime, LastAccessTime, LastWriteTime);
         errprint(r);
