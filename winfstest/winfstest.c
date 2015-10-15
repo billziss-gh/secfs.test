@@ -299,6 +299,33 @@ static int do_SetFileAttributes(int argc, wchar_t **argv)
 }
 static int do_SetFileTime(int argc, wchar_t **argv)
 {
+    if (argc != 5)
+        fail("usage: SetFileTime FileName CreationTime LastAccessTime LastWriteTime");
+    HANDLE h = CreateFileW(argv[1],
+        FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        0, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
+    if (INVALID_HANDLE_VALUE == h)
+        errprint(0);
+    else
+    {
+        FILETIME CreationTime, LastAccessTime, LastWriteTime;
+        SYSTEMTIME systime;
+        swscanf(argv[2], L"%hd-%02hd-%02hdT%02hd:%02hd:%02hd",
+            &systime.wYear, &systime.wMonth, &systime.wDay,
+            &systime.wHour, &systime.wMinute, &systime.wSecond);
+        SystemTimeToFileTime(&systime, &CreationTime);
+        swscanf(argv[3], L"%hd-%02hd-%02hdT%02hd:%02hd:%02hd",
+            &systime.wYear, &systime.wMonth, &systime.wDay,
+            &systime.wHour, &systime.wMinute, &systime.wSecond);
+        SystemTimeToFileTime(&systime, &LastAccessTime);
+        swscanf(argv[4], L"%hd-%02hd-%02hdT%02hd:%02hd:%02hd",
+            &systime.wYear, &systime.wMonth, &systime.wDay,
+            &systime.wHour, &systime.wMinute, &systime.wSecond);
+        SystemTimeToFileTime(&systime, &LastWriteTime);
+        BOOL r = SetFileTime(h, &CreationTime, &LastAccessTime, &LastWriteTime);
+        errprint(r);
+        CloseHandle(h);
+    }
     return 0;
 }
 static int do_SetEndOfFile(int argc, wchar_t **argv)
