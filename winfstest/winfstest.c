@@ -45,6 +45,7 @@ static int do_SetFileTime(int argc, wchar_t **argv);
 static int do_SetEndOfFile(int argc, wchar_t **argv);
 static int do_FindFiles(int argc, wchar_t **argv);
 static int do_MoveFileEx(int argc, wchar_t **argv);
+static int always_print_last_error = 0;
 
 static void fail(const char *fmt, ...)
 {
@@ -213,7 +214,7 @@ static const wchar_t *errstr(DWORD value)
 }
 static void errprint(int success)
 {
-    if (success)
+    if (success && !always_print_last_error)
         printf("0\n");
     else
         printf("%S\n", errstr(GetLastError()));
@@ -428,10 +429,18 @@ int wmain(int argc, wchar_t **argv)
     syminit();
     apiinit();
     errinit();
-    if (argc < 2)
+    argc--; argv++;
+    if (argc < 1)
         usage();
-    struct api *api = apiget(argv[1]);
+    if (0 == wcscmp(L"-e", argv[0]))
+    {
+        always_print_last_error = 1;
+        argc--; argv++;
+        if (argc < 1)
+            usage();
+    }
+    struct api *api = apiget(argv[0]);
     if (0 == api)
-        fail("cannot find API %S", argv[1]);
-	return api->fn(argc - 1, argv + 1);
+        fail("cannot find API %S", argv[0]);
+	return api->fn(argc, argv);
 }
