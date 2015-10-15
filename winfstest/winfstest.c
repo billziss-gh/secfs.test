@@ -320,7 +320,7 @@ static int do_SetFileTime(int argc, wchar_t **argv)
 }
 static int do_SetEndOfFile(int argc, wchar_t **argv)
 {
-    if (argc != 2)
+    if (argc != 3)
         fail("usage: SetEndOfFile FileName Length");
     HANDLE h = CreateFileW(argv[1],
         GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
@@ -364,14 +364,14 @@ static int do_FindFiles(int argc, wchar_t **argv)
             snprintf(mtimebuf, sizeof mtimebuf, "%d-%02d-%02dT%02d:%02d:%02dZ",
                 systime.wYear, systime.wMonth, systime.wDay,
                 systime.wHour, systime.wMinute, systime.wSecond);
-            printf("FileAttributes=%" PRIx32 " "
+            printf("FileAttributes=%#" PRIx32 " "
                 "CreationTime=%s LastAccessTime=%s LastWriteTime=%s "
-                "FileSize=%" PRIu64 " FileName=%S"
+                "FileSize=%" PRIu64 " AlternateFileName=\"%S\" FileName=\"%S\""
                 "\n",
                 FindData.dwFileAttributes,
                 btimebuf, atimebuf, mtimebuf,
                 ((uint64_t)FindData.nFileSizeHigh << 32) | (uint64_t)FindData.nFileSizeLow,
-                FindData.cFileName);
+                FindData.cAlternateFileName, FindData.cFileName);
         } while (FindNextFileW(h, &FindData));
         FindClose(h);
     }
