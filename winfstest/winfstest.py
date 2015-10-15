@@ -33,17 +33,16 @@
 
 import os, random, subprocess, sys
 
-__all__ = ["testline", "testeval", "testdone", "uniqname", "fstest", "expect", "expcnd"]
+__all__ = ["testline", "testeval", "testdone", "uniqname", "fstest", "expect"]
 
 ntests = 0
 def testline(ok, diag = ""):
     global ntests
     ntests += 1
     print "%sok %s%s%s" % ("" if ok else "not ", ntests, " - " if diag else "", diag)
-testeval_globals = {}
 def testeval(expr):
     f = sys._getframe(1)
-    testline(eval(expr, testeval_globals, f.f_locals), expr)
+    testline(eval(expr, f.f_globals, f.f_locals), expr)
 def testdone():
     global ntests
     print "1..%s" % ntests
@@ -73,17 +72,17 @@ def fstest(cmd):
                 except:
                     pass
             d[k] = v
-    testeval_globals["e"] = out[0]
-    testeval_globals["r"] = res
     return out[0], res
 def expect(cmd, exp):
     err, res = fstest(cmd)
-    if str(exp) == err:
-        testline(1, "expect \"%s\" %s" % (cmd, exp))
+    if isinstance(exp, type(expect)): # function, lambda
+        if "0" == err:
+            testline(exp(res), "expect \"%s\" %s" % (cmd, exp.__name__))
+        else:
+            testline(0, "expect \"%s\" %s - got %s" % (cmd, 0, err))
     else:
-        testline(0, "expect \"%s\" %s - got %s" % (cmd, exp, err))
-    return err, res
-def expcnd(cmd, exp):
-    err, res = expect(cmd, 0)
-    testeval(exp)
+        if str(exp) == err:
+            testline(1, "expect \"%s\" %s" % (cmd, exp))
+        else:
+            testline(0, "expect \"%s\" %s - got %s" % (cmd, exp, err))
     return err, res
