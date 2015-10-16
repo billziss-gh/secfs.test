@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# SetFileAttributes
+
 from winfstest import *
 
 name = uniqname()

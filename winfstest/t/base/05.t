@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# SetEndOfFile
+
 from winfstest import *
 
 name = uniqname()

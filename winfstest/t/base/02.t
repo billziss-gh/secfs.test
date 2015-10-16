@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# CreateDirectory
+# RemoveDirectory
+
 from winfstest import *
 
 name = uniqname()

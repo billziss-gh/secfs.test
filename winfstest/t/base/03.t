@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# FindFiles (FindFirstFile, FindNextFile, FindClose)
+
 from winfstest import *
 
 name = uniqname()

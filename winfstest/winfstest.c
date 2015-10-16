@@ -44,7 +44,9 @@ static int do_SetFileAttributes(int argc, wchar_t **argv);
 static int do_SetFileTime(int argc, wchar_t **argv);
 static int do_SetEndOfFile(int argc, wchar_t **argv);
 static int do_FindFiles(int argc, wchar_t **argv);
+static int do_FindStreams(int argc, wchar_t **argv);
 static int do_MoveFileEx(int argc, wchar_t **argv);
+static int do_RenameStream(int argc, wchar_t **argv);
 static int always_print_last_error = 0;
 
 static void fail(const char *fmt, ...)
@@ -160,7 +162,9 @@ struct api apitab[] =
     API(SetFileTime),
     API(SetEndOfFile),
     API(FindFiles),
+    API(FindStreams),
     API(MoveFileEx),
+    API(RenameStream),
 };
 static int apicmp(const void *p1, const void *p2)
 {
@@ -412,6 +416,26 @@ static int do_FindFiles(int argc, wchar_t **argv)
     }
     return 0;
 }
+static int do_FindStreams(int argc, wchar_t **argv)
+{
+    if (argc != 2)
+        fail("usage: FindStreams FileName");
+    WIN32_FIND_STREAM_DATA FindData;
+    HANDLE h = FindFirstStreamW(argv[1], FindStreamInfoStandard, &FindData, 0);
+    if (INVALID_HANDLE_VALUE == h)
+        errprint(0);
+    else
+    {
+        errprint(1);
+        do
+        {
+            printf("StreamSize=%" PRIu64 " StreamName=\"%S\"\n",
+                FindData.StreamSize.QuadPart, FindData.cStreamName);
+        } while (FindNextStreamW(h, &FindData));
+        FindClose(h);
+    }
+    return 0;
+}
 static int do_MoveFileEx(int argc, wchar_t **argv)
 {
     if (argc != 4)
@@ -420,9 +444,50 @@ static int do_MoveFileEx(int argc, wchar_t **argv)
     errprint(r);
     return 0;
 }
+static int do_RenameStream(int argc, wchar_t **argv)
+{
+    if (argc != 4 || ':' != argv[2][0])
+        fail("usage: RenameStream FileName:ExistingStreamName :NewStreamName ReplaceIfExists");
+    fail("not implemented!");
+#if 0
+    HANDLE h = CreateFileW(argv[1],
+        DELETE | SYNCHRONIZE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        0, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
+    if (INVALID_HANDLE_VALUE == h)
+        errprint(0);
+    else
+    {
+        typedef struct _FILE_RENAME_INFORMATION {
+            BOOLEAN ReplaceIfExists;
+            HANDLE RootDirectory;
+            ULONG FileNameLength;
+            WCHAR FileName[1];
+        } FILE_RENAME_INFORMATION, *PFILE_RENAME_INFORMATION;
+        size_t namesize = wcslen(argv[2]) * sizeof(wchar_t);
+        size_t infosize = sizeof(FILE_RENAME_INFORMATION) + namesize;
+        FILE_RENAME_INFORMATION *RenameInfo = _alloca(infosize);
+        memset(RenameInfo, 0, infosize);
+        RenameInfo->ReplaceIfExists = !!(wcstoul(argv[3], 0, 0));
+        RenameInfo->RootDirectory = 0;
+        RenameInfo->FileNameLength = namesize;
+        memcpy(RenameInfo->FileName, argv[2], namesize);
+        /*
+         * This seems to fail with ERROR_INVALID_HANDLE on Win32 and ERROR_INVALID_NAME on Win64.
+         * Do not have the time to figure the exact reasons why right now.
+         */
+        BOOL r = SetFileInformationByHandle(h, FileRenameInfo, &RenameInfo, infosize);
+        errprint(r);
+        CloseHandle(h);
+    }
+#endif
+    return 0;
+}
 static void usage()
 {
-    fail("usage: winfstest ApiName args...");
+    fprintf(stderr, "usage: winfstest ApiName args...\n");
+    for (size_t i = 0; sizeof apitab / sizeof apitab[0] > i; i++)
+        fprintf(stderr, "    %S\n", apitab[i].name);
+    exit(1);
 }
 int wmain(int argc, wchar_t **argv)
 {

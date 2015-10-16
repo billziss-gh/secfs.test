@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# CreateFile (directory stream)
+# DeleteFile (directory stream)
+
 from winfstest import *
 
 name = uniqname()

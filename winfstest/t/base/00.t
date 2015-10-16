@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# CreateFile CreationDisposition
+# DeleteFile
+
 from winfstest import *
 
 name = uniqname()

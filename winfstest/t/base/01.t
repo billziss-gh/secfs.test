@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# CreateFile FlagsAndAttributes
+# DeleteFile
+
 from winfstest import *
 
 name = uniqname()
