@@ -14,7 +14,6 @@ with expect_task("CreateFile %s GENERIC_WRITE FILE_SHARE_READ+FILE_SHARE_WRITE+F
     # STATUS_DELETE_PENDING translated to ERROR_ACCESS_DENIED below
     expect("CreateFile %s GENERIC_READ FILE_SHARE_READ+FILE_SHARE_WRITE+FILE_SHARE_DELETE 0 OPEN_EXISTING 0 0" % name, "ERROR_ACCESS_DENIED")
 
-# this only works on Cygwin because files are opened with share access there
 expect("CreateDirectory %s 0" % name, 0)
 with expect_task("CreateFile %s\\foo GENERIC_WRITE FILE_SHARE_READ+FILE_SHARE_WRITE+FILE_SHARE_DELETE 0 CREATE_NEW FILE_ATTRIBUTE_NORMAL 0" % name, 0):
     expect("DeleteFile %s\\foo" % name, 0)
