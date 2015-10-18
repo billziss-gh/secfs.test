@@ -47,7 +47,9 @@ static int do_FindFiles(int argc, wchar_t **argv);
 static int do_FindStreams(int argc, wchar_t **argv);
 static int do_MoveFileEx(int argc, wchar_t **argv);
 static int do_RenameStream(int argc, wchar_t **argv);
+
 static int always_print_last_error = 0;
+static int wait_for_input_before_exit = 0;
 
 static void fail(const char *fmt, ...)
 {
@@ -484,7 +486,7 @@ static int do_RenameStream(int argc, wchar_t **argv)
 }
 static void usage()
 {
-    fprintf(stderr, "usage: winfstest ApiName args...\n");
+    fprintf(stderr, "usage: winfstest [-w][-e] ApiName args...\n");
     for (size_t i = 0; sizeof apitab / sizeof apitab[0] > i; i++)
         fprintf(stderr, "    %S\n", apitab[i].name);
     exit(1);
@@ -497,6 +499,13 @@ int wmain(int argc, wchar_t **argv)
     argc--; argv++;
     if (argc < 1)
         usage();
+    if (0 == wcscmp(L"-w", argv[0]))
+    {
+        wait_for_input_before_exit = 1;
+        argc--; argv++;
+        if (argc < 1)
+            usage();
+    }
     if (0 == wcscmp(L"-e", argv[0]))
     {
         always_print_last_error = 1;
@@ -507,5 +516,12 @@ int wmain(int argc, wchar_t **argv)
     struct api *api = apiget(argv[0]);
     if (0 == api)
         fail("cannot find API %S", argv[0]);
-    return api->fn(argc, argv);
+    int ec = api->fn(argc, argv);
+    fflush(stdout);
+    if (wait_for_input_before_exit)
+    {
+    	char buf[80];
+    	fgets(buf, sizeof buf, stdin);
+    }
+    return ec;
 }
