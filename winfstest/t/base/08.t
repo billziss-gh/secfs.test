@@ -4,7 +4,6 @@
 # FindFiles with delete pending
 
 from winfstest import *
-import os
 
 name = uniqname()
 
