@@ -520,8 +520,8 @@ int wmain(int argc, wchar_t **argv)
     fflush(stdout);
     if (wait_for_input_before_exit)
     {
-    	char buf[80];
-    	fgets(buf, sizeof buf, stdin);
+        char buf[80];
+        fgets(buf, sizeof buf, stdin);
     }
     return ec;
 }
