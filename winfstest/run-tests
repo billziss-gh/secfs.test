@@ -6,4 +6,9 @@ CYGWIN*) ;;
 esac
 
 ProgPath=$(dirname "$0")
-PYTHONPATH="$ProgPath" prove -fr "$ProgPath/t"
+if [[ $# -eq 0 ]]; then
+    tests=("$ProgPath/t/")
+else
+    tests=${@/#/"$ProgPath/t/"}
+fi
+PYTHONPATH="$ProgPath" prove -fr "${tests[@]}"
