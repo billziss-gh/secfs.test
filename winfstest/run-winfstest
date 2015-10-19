@@ -11,4 +11,4 @@ if [[ $# -eq 0 ]]; then
 else
     tests=${@/#/"$ProgPath/t/"}
 fi
-PYTHONPATH="$ProgPath" prove -fr "${tests[@]}"
+PYTHONPATH="$ProgPath" "$ProgPath/simpletap.py" "${tests[@]}"

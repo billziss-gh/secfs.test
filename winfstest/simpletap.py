@@ -35,6 +35,7 @@ def parse(iter):
 
 if "__main__" == __name__:
     import os, subprocess, sys
+
     def walktree(path):
         if os.path.isdir(path):
             return os.walk(path)
@@ -52,10 +53,12 @@ if "__main__" == __name__:
         newline = True
     def writehead(path):
         write((path + " ").ljust(39, ".") + " ")
+
     verbose = False
     newline = False
-    okstr = "ok"
-    kostr = "not ok"
+    colors = hasattr(sys.stdout, "isatty") and sys.stdout.isatty() and os.getenv("TERM") == "xterm"
+    okstr = "\x1B[32mok\x1B[0m" if colors else "ok"
+    kostr = "\x1B[31mnot ok\x1B[0m" if colors else "ok"
     for arg in sys.argv[1:]:
         for dirpath, dirnames, filenames in walktree(arg):
             for filename in filenames:
@@ -69,9 +72,9 @@ if "__main__" == __name__:
                             if newline:
                                 writehead(filename)
                             if not i[1] and not i[3]:
-                                write("ok")
+                                write(okstr)
                             else:
-                                write("not ok")
+                                write(kostr)
                                 if i[3]:
                                     write(" - %s/%s tests failed" % (len(i[3]), len(i[2]) + len(i[3])))
                                 if "?" == i[1]:
@@ -81,9 +84,9 @@ if "__main__" == __name__:
                                 writenl("%s..%s" % i[1])
                         elif "OK" == i[0]:
                             if verbose:
-                                writenl("ok %s%s" % i[1])
+                                writenl(okstr + " %s%s" % i[1])
                         elif "KO" == i[0]:
-                            writenl("not ok %s%s" % i[1])
+                            writenl(kostr + " %s%s" % i[1])
                         elif "VV" == i[0]:
                             if verbose:
                                 writenl("%s" % i[1])
