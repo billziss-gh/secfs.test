@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # winfstest.py
 #
 # Copyright (c) 2015, Bill Zissimopoulos. All rights reserved.
@@ -55,7 +53,7 @@ def uniqname():
 
 _fstest_exe = os.path.splitext(os.path.realpath(__file__))[0] + ".exe"
 def _fstest_res(out):
-    out = out.split("\n")
+    out = out.splitlines()
     res = []
     for l in out[1:]:
         if not l:

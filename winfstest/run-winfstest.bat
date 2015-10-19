@@ -7,6 +7,4 @@ for /f "tokens=2,*" %%i in ('reg query %PythonRegKey%\InstallPath /ve ^| findstr
 )
 
 set PYTHONPATH=%~dp0
-for /f %%i in ('dir /b /s t\*.t') do (
-    "%PythonInstallPath%\python.exe" %%i
-)
+"%PythonInstallPath%\python.exe" %~dp0simpletap.py %~dp0t
