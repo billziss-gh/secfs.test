@@ -35,4 +35,11 @@ e, s = expect("GetFileInformation %s:foo"% name, 0)
 testeval('r[0]["FileIndex"] == s[0]["FileIndex"]')
 expect("DeleteFile %s" % name, 0)
 
+expect("CreateFile %s:foo:$DATA GENERIC_WRITE 0 0 CREATE_ALWAYS FILE_ATTRIBUTE_NORMAL 0" % name, 0)
+expect("-e CreateFile %s:foo:$DATA GENERIC_WRITE 0 0 CREATE_ALWAYS FILE_ATTRIBUTE_NORMAL 0" % name, "ERROR_ALREADY_EXISTS")
+e, r = expect("GetFileInformation %s"% name, 0)
+e, s = expect("GetFileInformation %s:foo"% name, 0)
+testeval('r[0]["FileIndex"] == s[0]["FileIndex"]')
+expect("DeleteFile %s" % name, 0)
+
 testdone()
