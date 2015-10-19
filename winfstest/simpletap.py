@@ -98,7 +98,7 @@ if "__main__" == __name__:
                     writenl("")
     if totals[0] + totals[1]:
         writenl("")
-        writehead("Totals")
+        writehead("total")
         if totals[0]:
             write("%s %s/%s" % (okstr, totals[0], totals[0] + totals[1]))
         if totals[1]:
