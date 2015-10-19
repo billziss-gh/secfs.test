@@ -58,7 +58,8 @@ if "__main__" == __name__:
     newline = False
     colors = hasattr(sys.stdout, "isatty") and sys.stdout.isatty() and os.getenv("TERM") == "xterm"
     okstr = "\x1B[32mok\x1B[0m" if colors else "ok"
-    kostr = "\x1B[31mnot ok\x1B[0m" if colors else "ok"
+    kostr = "\x1B[31mnot ok\x1B[0m" if colors else "not ok"
+    totals = [0, 0]
     for arg in sys.argv[1:]:
         for dirpath, dirnames, filenames in walktree(arg):
             for filename in filenames:
@@ -76,16 +77,18 @@ if "__main__" == __name__:
                             else:
                                 write(kostr)
                                 if i[3]:
-                                    write(" - %s/%s tests failed" % (len(i[3]), len(i[2]) + len(i[3])))
+                                    write(" %s/%s" % (len(i[3]), len(i[2]) + len(i[3])))
                                 if "?" == i[1]:
                                     write(" - test plan missing")
                         elif "PL" == i[0]:
                             if verbose:
                                 writenl("%s..%s" % i[1])
                         elif "OK" == i[0]:
+                            totals[0] += 1
                             if verbose:
                                 writenl(okstr + " %s%s" % i[1])
                         elif "KO" == i[0]:
+                            totals[1] += 1
                             writenl(kostr + " %s%s" % i[1])
                         elif "VV" == i[0]:
                             if verbose:
@@ -93,3 +96,11 @@ if "__main__" == __name__:
                         else:
                             assert False
                     writenl("")
+    if totals[0] + totals[1]:
+        writenl("")
+        writehead("Totals")
+        if totals[0]:
+            write("%s %s/%s" % (okstr, totals[0], totals[0] + totals[1]))
+        if totals[1]:
+            write("%s%s %s/%s" % (" - " if totals[0] else "", kostr, totals[1], totals[0] + totals[1]))
+        writenl("")
