@@ -25,4 +25,9 @@ with expect_task("CreateFile %s DELETE FILE_SHARE_DELETE 0 CREATE_ALWAYS FILE_AT
 
 expect("DeleteFile %s" % name, 0)
 
+expect("CreateDirectory %s 0" % name, 0)
+with expect_task("CreateFile %s GENERIC_READ 0 0 OPEN_EXISTING FILE_FLAG_BACKUP_SEMANTICS 0" % name, 0):
+    expect("CreateFile %s GENERIC_READ 0 0 OPEN_EXISTING FILE_FLAG_BACKUP_SEMANTICS 0" % name, "ERROR_SHARING_VIOLATION")
+expect("RemoveDirectory %s" % name, 0)
+
 testdone()
