@@ -96,9 +96,9 @@ if "__main__" == __name__:
             for filename in filenames:
                 if filename.endswith(".t"):
                     filename = os.path.join(dirpath, filename)
+                    writehead(filename)
                     out = subprocess.check_output([sys.executable, filename],
                         stderr=subprocess.STDOUT, universal_newlines=True)
-                    writehead(filename)
                     for i in parse(out.splitlines()):
                         if "RR" == i[0]:
                             if newline:
