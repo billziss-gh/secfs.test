@@ -29,7 +29,7 @@
 # (INCLUDING NEGLIGENCE  OR OTHERWISE) ARISING IN  ANY WAY OUT OF  THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os, random, subprocess, sys, threading
+import inspect, os, random, subprocess, sys, threading
 
 __all__ = [
     "testline", "testeval", "testdone", "uniqname",
@@ -40,9 +40,14 @@ def testline(ok, diag = ""):
     global _ntests
     _ntests += 1
     print "%sok %s%s%s" % ("" if ok else "not ", _ntests, " - " if diag else "", diag)
-def testeval(expr):
-    f = sys._getframe(1)
-    testline(eval(expr, f.f_globals, f.f_locals), expr)
+def testeval(ok):
+    diag = inspect.stack()[1]
+    if diag and diag[4] is not None and diag[5] is not None:
+        diag = diag[4][diag[5]]
+        diag = diag.strip()
+    else:
+        diag = ""
+    testline(ok, diag)
 def testdone():
     global _ntests
     print "1..%s" % _ntests
