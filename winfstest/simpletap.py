@@ -84,54 +84,62 @@ if "__main__" == __name__:
         newline = True
     def writehead(path):
         write((path + " ").ljust(39, ".") + " ")
-
-    verbose = False
-    newline = False
-    colors = hasattr(sys.stdout, "isatty") and sys.stdout.isatty() and os.getenv("TERM") == "xterm"
-    okstr = "\x1B[32mok\x1B[0m" if colors else "ok"
-    kostr = "\x1B[31mnot ok\x1B[0m" if colors else "not ok"
-    totals = [0, 0]
-    for arg in sys.argv[1:]:
-        for dirpath, dirnames, filenames in walktree(arg):
-            for filename in filenames:
-                if filename.endswith(".t"):
-                    filename = os.path.join(dirpath, filename)
-                    writehead(filename)
-                    out = subprocess.check_output([sys.executable, filename],
-                        stderr=subprocess.STDOUT, universal_newlines=True)
-                    for i in parse(out.splitlines()):
-                        if "RR" == i[0]:
-                            if newline:
-                                writehead(filename)
-                            if not i[1] and not i[3]:
-                                write(okstr)
+    def main():
+        verbose = False
+        newline = False
+        colors = hasattr(sys.stdout, "isatty") and sys.stdout.isatty() and os.getenv("TERM") == "xterm"
+        okstr = "\x1B[32mok\x1B[0m" if colors else "ok"
+        kostr = "\x1B[31mnot ok\x1B[0m" if colors else "not ok"
+        totals = [0, 0]
+        for arg in sys.argv[1:]:
+            for dirpath, dirnames, filenames in walktree(arg):
+                for filename in filenames:
+                    if filename.endswith(".t"):
+                        filename = os.path.join(dirpath, filename)
+                        writehead(filename)
+                        out = subprocess.check_output([sys.executable, filename],
+                            stderr=subprocess.STDOUT, universal_newlines=True)
+                        for i in parse(out.splitlines()):
+                            if "RR" == i[0]:
+                                if newline:
+                                    writehead(filename)
+                                if not i[1] and not i[3]:
+                                    write(okstr)
+                                else:
+                                    write(kostr)
+                                    if i[3]:
+                                        write(" %s/%s" % (len(i[3]), len(i[2]) + len(i[3])))
+                                    if "?" == i[1]:
+                                        write(" - test plan missing")
+                            elif "PL" == i[0]:
+                                if verbose:
+                                    writenl("%s..%s" % i[1])
+                            elif "OK" == i[0]:
+                                totals[0] += 1
+                                if verbose:
+                                    writenl(okstr + " %s%s" % i[1])
+                            elif "KO" == i[0]:
+                                totals[1] += 1
+                                writenl(kostr + " %s%s" % i[1])
+                            elif "VV" == i[0]:
+                                if verbose:
+                                    writenl("%s" % i[1])
                             else:
-                                write(kostr)
-                                if i[3]:
-                                    write(" %s/%s" % (len(i[3]), len(i[2]) + len(i[3])))
-                                if "?" == i[1]:
-                                    write(" - test plan missing")
-                        elif "PL" == i[0]:
-                            if verbose:
-                                writenl("%s..%s" % i[1])
-                        elif "OK" == i[0]:
-                            totals[0] += 1
-                            if verbose:
-                                writenl(okstr + " %s%s" % i[1])
-                        elif "KO" == i[0]:
-                            totals[1] += 1
-                            writenl(kostr + " %s%s" % i[1])
-                        elif "VV" == i[0]:
-                            if verbose:
-                                writenl("%s" % i[1])
-                        else:
-                            assert False
-                    writenl("")
-    if totals[0] + totals[1]:
-        writenl("")
-        writehead("total")
-        if totals[0]:
-            write("%s %s/%s" % (okstr, totals[0], totals[0] + totals[1]))
-        if totals[1]:
-            write("%s%s %s/%s" % (" - " if totals[0] else "", kostr, totals[1], totals[0] + totals[1]))
-        writenl("")
+                                assert False
+                        writenl("")
+        if totals[0] + totals[1]:
+            writenl("")
+            writehead("total")
+            if totals[0]:
+                write("%s %s/%s" % (okstr, totals[0], totals[0] + totals[1]))
+            if totals[1]:
+                write("%s%s %s/%s" % (" - " if totals[0] else "", kostr, totals[1], totals[0] + totals[1]))
+            writenl("")
+
+    try:
+        main()
+    except subprocess.CalledProcessError, ex:
+        print >>sys.stderr
+        print >>sys.stderr, ex
+        print >>sys.stderr, ex.output
+        sys.exit(ex.returncode)
