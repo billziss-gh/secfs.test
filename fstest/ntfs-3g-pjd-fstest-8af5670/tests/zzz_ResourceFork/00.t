@@ -7,7 +7,7 @@ dir=`dirname $0`
 
 case "${os}" in
 Darwin)
-    echo "1..2"
+    echo "1..6"
 
     n0=`namegen`
     n1=`namegen`
@@ -19,6 +19,15 @@ Darwin)
     cmp "${n0}" "${n1}"/..namedfork/rsrc
     test_check $? -eq 0
     rm "${n0}" "${n1}"
+
+    touch "${n0}"
+    xattr -w com.apple.ResourceFork "1234567890" "${n0}"
+    test_check $? -eq 0
+    test_check $(xattr -p com.apple.ResourceFork "${n0}") == "1234567890"
+    xattr -w com.apple.ResourceFork "abcd" "${n0}"
+    test_check $? -eq 0
+    test_check $(xattr -p com.apple.ResourceFork "${n0}") == "abcd567890"
+    rm "${n0}"
     ;;
 *)
     quick_exit
