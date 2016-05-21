@@ -1,0 +1,11 @@
+Targets		= \
+	fstools\src\fsx\fsx.exe \
+	winfstest\winfstest.exe
+
+all: $(Targets)
+
+fstools\src\fsx\fsx.exe:
+	cd $(@D) & nmake /f Nmakefile
+
+winfstest\winfstest.exe:
+	cd $(@D) & nmake /f Nmakefile

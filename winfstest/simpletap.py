@@ -91,7 +91,12 @@ if "__main__" == __name__:
         okstr = "\x1B[32mok\x1B[0m" if colors else "ok"
         kostr = "\x1B[31mnot ok\x1B[0m" if colors else "not ok"
         totals = [0, 0]
-        for arg in sys.argv[1:]:
+        argv = sys.argv[1:]
+        if argv and "--run" == argv[0]:
+            argv = [os.path.join(os.path.dirname(sys.argv[0]), "t", arg) for arg in argv[1:]]
+            if not argv:
+                argv = [os.path.join(os.path.dirname(sys.argv[0]), "t")]
+        for arg in argv:
             for dirpath, dirnames, filenames in walktree(arg):
                 for filename in filenames:
                     if filename.endswith(".t"):
