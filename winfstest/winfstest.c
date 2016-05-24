@@ -32,6 +32,7 @@
  */
 
 #include <windows.h>
+#include <sddl.h>
 #include <inttypes.h>
 #include <stdio.h>
 
@@ -43,6 +44,8 @@ static int do_GetFileInformation(int argc, wchar_t **argv);
 static int do_SetFileAttributes(int argc, wchar_t **argv);
 static int do_SetFileTime(int argc, wchar_t **argv);
 static int do_SetEndOfFile(int argc, wchar_t **argv);
+static int do_GetFileSecurity(int argc, wchar_t **argv);
+static int do_SetFileSecurity(int argc, wchar_t **argv);
 static int do_FindFiles(int argc, wchar_t **argv);
 static int do_FindStreams(int argc, wchar_t **argv);
 static int do_MoveFileEx(int argc, wchar_t **argv);
@@ -112,6 +115,10 @@ struct sym symtab[] =
     SYM(FILE_FLAG_OPEN_REPARSE_POINT),
     SYM(FILE_FLAG_OPEN_NO_RECALL),
     SYM(FILE_FLAG_FIRST_PIPE_INSTANCE),
+    SYM(OWNER_SECURITY_INFORMATION),
+    SYM(GROUP_SECURITY_INFORMATION),
+    SYM(DACL_SECURITY_INFORMATION),
+    SYM(SACL_SECURITY_INFORMATION),
     SYM(MOVEFILE_REPLACE_EXISTING),
     SYM(MOVEFILE_COPY_ALLOWED),
     SYM(MOVEFILE_DELAY_UNTIL_REBOOT),
@@ -176,6 +183,8 @@ struct api apitab[] =
     API(SetFileAttributes),
     API(SetFileTime),
     API(SetEndOfFile),
+    API(GetFileSecurity),
+    API(SetFileSecurity),
     API(FindFiles),
     API(FindStreams),
     API(MoveFileEx),
@@ -242,9 +251,21 @@ static void errprint(int success)
 static int do_CreateFile(int argc, wchar_t **argv)
 {
     if (argc != 8)
-        fail("usage: CreateFile FileName DesiredAccess ShareMode 0 CreationDisposition FlagsAndAttributes 0");
-    HANDLE h = CreateFileW(argv[1], symval(argv[2]), symval(argv[3]), 0, symval(argv[5]), symval(argv[6]), 0);
+        fail("usage: CreateFile FileName DesiredAccess ShareMode Sddl CreationDisposition FlagsAndAttributes 0");
+    SECURITY_ATTRIBUTES SecurityAttributes;
+    SecurityAttributes.nLength = sizeof SecurityAttributes;
+    SecurityAttributes.bInheritHandle = FALSE;
+    SecurityAttributes.lpSecurityDescriptor = 0;
+    if (0 != wcscmp(L"0", argv[4]))
+    {
+        if (!ConvertStringSecurityDescriptorToSecurityDescriptorW(
+            argv[4], SDDL_REVISION_1, &SecurityAttributes.lpSecurityDescriptor, 0))
+            fail("invalid SDDL %S", argv[4]);
+    }
+    HANDLE h = CreateFileW(argv[1], symval(argv[2]), symval(argv[3]), &SecurityAttributes,
+        symval(argv[5]), symval(argv[6]), 0);
     errprint(INVALID_HANDLE_VALUE != h);
+    LocalFree(SecurityAttributes.lpSecurityDescriptor);
     return 0;
 }
 static int do_DeleteFile(int argc, wchar_t **argv)
@@ -258,9 +279,20 @@ static int do_DeleteFile(int argc, wchar_t **argv)
 static int do_CreateDirectory(int argc, wchar_t **argv)
 {
     if (argc != 3)
-        fail("usage: CreateDirectory PathName 0");
-    BOOL r = CreateDirectoryW(argv[1], 0);
+        fail("usage: CreateDirectory PathName Sddl");
+    SECURITY_ATTRIBUTES SecurityAttributes;
+    SecurityAttributes.nLength = sizeof SecurityAttributes;
+    SecurityAttributes.bInheritHandle = FALSE;
+    SecurityAttributes.lpSecurityDescriptor = 0;
+    if (0 != wcscmp(L"0", argv[2]))
+    {
+        if (!ConvertStringSecurityDescriptorToSecurityDescriptorW(
+            argv[2], SDDL_REVISION_1, &SecurityAttributes.lpSecurityDescriptor, 0))
+            fail("invalid SDDL %S", argv[2]);
+    }
+    BOOL r = CreateDirectoryW(argv[1], &SecurityAttributes);
     errprint(r);
+    LocalFree(SecurityAttributes.lpSecurityDescriptor);
     return 0;
 }
 static int do_RemoveDirectory(int argc, wchar_t **argv)
@@ -389,6 +421,60 @@ static int do_SetEndOfFile(int argc, wchar_t **argv)
         errprint(r);
         CloseHandle(h);
     }
+    return 0;
+}
+static int do_GetFileSecurity(int argc, wchar_t **argv)
+{
+    if (argc != 3)
+        fail("usage: GetFileSecurity FileName SecurityInformation");
+    SECURITY_INFORMATION SecurityInformation = symval(argv[2]);
+    PSECURITY_DESCRIPTOR SecurityDescriptor = 0;
+    PWSTR Sddl = 0;
+    DWORD Size;
+    BOOL r = GetFileSecurityW(argv[1], SecurityInformation, SecurityDescriptor, 0, &Size);
+    if (!r && ERROR_INSUFFICIENT_BUFFER != GetLastError())
+        errprint(0);
+    else
+    {
+        SecurityDescriptor = malloc(Size);
+        if (0 == SecurityDescriptor)
+            fail("cannot alloc memory for security descriptor");
+        r = GetFileSecurityW(argv[1], SecurityInformation, SecurityDescriptor, Size, &Size);
+        if (!r)
+            errprint(0);
+        else
+        {
+            if (!ConvertSecurityDescriptorToStringSecurityDescriptorW(SecurityDescriptor,
+                SDDL_REVISION_1,
+                OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION,
+                &Sddl, 0))
+            {
+                errprint(0);
+            }
+            else
+            {
+                errprint(1);
+                printf("Sddl=\"%S\"\n", Sddl);
+            }
+            LocalFree(Sddl);
+        }
+        free(SecurityDescriptor);
+    }
+    return 0;
+}
+static int do_SetFileSecurity(int argc, wchar_t **argv)
+{
+    if (argc != 4)
+        fail("usage: SetFileSecurity FileName SecurityInformation Sddl");
+    SECURITY_INFORMATION SecurityInformation = symval(argv[2]);
+    PSECURITY_DESCRIPTOR SecurityDescriptor;
+    if (!ConvertStringSecurityDescriptorToSecurityDescriptorW(
+        argv[3], SDDL_REVISION_1, &SecurityDescriptor, 0))
+        fail("invalid SDDL %S", argv[3]);
+    BOOL r = SetFileSecurityW(argv[1], SecurityInformation, SecurityDescriptor);
+    errprint(r);
+    LocalFree(SecurityDescriptor);
     return 0;
 }
 static int do_FindFiles(int argc, wchar_t **argv)

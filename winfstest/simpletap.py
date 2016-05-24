@@ -140,6 +140,7 @@ if "__main__" == __name__:
             if totals[1]:
                 write("%s%s %s/%s" % (" - " if totals[0] else "", kostr, totals[1], totals[0] + totals[1]))
             writenl("")
+        sys.exit(1 if totals[1] else 0)
 
     try:
         main()
