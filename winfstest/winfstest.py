@@ -29,7 +29,7 @@
 # (INCLUDING NEGLIGENCE  OR OTHERWISE) ARISING IN  ANY WAY OUT OF  THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import inspect, os, random, subprocess, sys, threading, types
+import inspect, os, random, shlex, subprocess, sys, threading, types
 
 __all__ = [
     "testline", "testeval", "testdone", "uniqname",
@@ -100,7 +100,7 @@ class _fstest_task(object):
                 continue
             d = {}
             res.append(d)
-            for p in l.split():
+            for p in shlex.split(l):
                 k, v = p.split("=", 2)
                 if v.startswith('"') and v.endswith('"') and len(v) >= 2:
                     v = v[1:-1]

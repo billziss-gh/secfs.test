@@ -592,6 +592,7 @@ static int do_GetReparsePoint(int argc, wchar_t **argv)
             &Bytes, 0);
         if (r)
         {
+            errprint(1);
             if (IO_REPARSE_TAG_MOUNT_POINT == ReparseDataBuf.D.ReparseTag)
             {
                 printf("ReparseTag=IO_REPARSE_TAG_MOUNT_POINT "
@@ -642,7 +643,6 @@ static int do_GetReparsePoint(int argc, wchar_t **argv)
                 printf("\"\n");
 #undef Guid
             }
-            errprint(1);
         }
         else
             errprint(0);
