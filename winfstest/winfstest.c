@@ -36,16 +36,57 @@
 #include <inttypes.h>
 #include <stdio.h>
 
+/*
+ * The REPARSE_DATA_BUFFER definitions appear to be missing from the user mode headers.
+ */
+#if !defined(SYMLINK_FLAG_RELATIVE)
+#define SYMLINK_FLAG_RELATIVE           1
+typedef struct _REPARSE_DATA_BUFFER
+{
+    ULONG ReparseTag;
+    USHORT ReparseDataLength;
+    USHORT Reserved;
+    union
+    {
+        struct
+        {
+            USHORT SubstituteNameOffset;
+            USHORT SubstituteNameLength;
+            USHORT PrintNameOffset;
+            USHORT PrintNameLength;
+            ULONG Flags;
+            WCHAR PathBuffer[1];
+        } SymbolicLinkReparseBuffer;
+        struct
+        {
+            USHORT SubstituteNameOffset;
+            USHORT SubstituteNameLength;
+            USHORT PrintNameOffset;
+            USHORT PrintNameLength;
+            WCHAR PathBuffer[1];
+        } MountPointReparseBuffer;
+        struct
+        {
+            UCHAR DataBuffer[1];
+        } GenericReparseBuffer;
+    } DUMMYUNIONNAME;
+} REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
+#endif
+
 static int do_CreateFile(int argc, wchar_t **argv);
 static int do_DeleteFile(int argc, wchar_t **argv);
 static int do_CreateDirectory(int argc, wchar_t **argv);
 static int do_RemoveDirectory(int argc, wchar_t **argv);
+static int do_CreateSymbolicLink(int argc, wchar_t **argv);
 static int do_GetFileInformation(int argc, wchar_t **argv);
 static int do_SetFileAttributes(int argc, wchar_t **argv);
 static int do_SetFileTime(int argc, wchar_t **argv);
 static int do_SetEndOfFile(int argc, wchar_t **argv);
 static int do_GetFileSecurity(int argc, wchar_t **argv);
 static int do_SetFileSecurity(int argc, wchar_t **argv);
+static int do_GetReparsePoint(int argc, wchar_t **argv);
+static int do_SetReparsePoint(int argc, wchar_t **argv);
+static int do_DeleteReparsePoint(int argc, wchar_t **argv);
 static int do_FindFiles(int argc, wchar_t **argv);
 static int do_FindStreams(int argc, wchar_t **argv);
 static int do_MoveFileEx(int argc, wchar_t **argv);
@@ -115,6 +156,20 @@ struct sym symtab[] =
     SYM(FILE_FLAG_OPEN_REPARSE_POINT),
     SYM(FILE_FLAG_OPEN_NO_RECALL),
     SYM(FILE_FLAG_FIRST_PIPE_INSTANCE),
+    SYM(SYMBOLIC_LINK_FLAG_DIRECTORY),
+    SYM(IO_REPARSE_TAG_MOUNT_POINT),
+    SYM(IO_REPARSE_TAG_HSM),
+    SYM(IO_REPARSE_TAG_HSM2),
+    SYM(IO_REPARSE_TAG_SIS),
+    SYM(IO_REPARSE_TAG_WIM),
+    SYM(IO_REPARSE_TAG_CSV),
+    SYM(IO_REPARSE_TAG_DFS),
+    SYM(IO_REPARSE_TAG_SYMLINK),
+    SYM(IO_REPARSE_TAG_DFSR),
+    SYM(IO_REPARSE_TAG_DEDUP),
+    SYM(IO_REPARSE_TAG_NFS),
+    SYM(IO_REPARSE_TAG_FILE_PLACEHOLDER),
+    SYM(IO_REPARSE_TAG_WOF),
     SYM(OWNER_SECURITY_INFORMATION),
     SYM(GROUP_SECURITY_INFORMATION),
     SYM(DACL_SECURITY_INFORMATION),
@@ -166,6 +221,30 @@ static DWORD symval(const wchar_t *name)
     }
     return value;
 }
+static void guidval(const wchar_t *s0, GUID *guid)
+{
+    memset(guid, 0, sizeof *guid);
+    wchar_t *s = (wchar_t *)s0;
+    s += L'{' == *s;
+    guid->Data1 = wcstoul(s, &s, 16);
+    s += L'-' == *s;
+    guid->Data2 = wcstoul(s, &s, 16);
+    s += L'-' == *s;
+    guid->Data3 = wcstoul(s, &s, 16);
+    s += L'-' == *s;
+    uint32_t Data40 = wcstoul(s, &s, 16);
+    guid->Data4[0] = (Data40 & 0xff00) >> 8;
+    guid->Data4[1] = (Data40 & 0x00ff);
+    s += L'-' == *s;
+    uint64_t Data42 = wcstoull(s, &s, 16);
+    guid->Data4[2] = (Data42 & 0xff0000000000) >> 40;
+    guid->Data4[3] = (Data42 & 0x00ff00000000) >> 32;
+    guid->Data4[4] = (Data42 & 0x0000ff000000) >> 24;
+    guid->Data4[5] = (Data42 & 0x000000ff0000) >> 16;
+    guid->Data4[6] = (Data42 & 0x00000000ff00) >> 8;
+    guid->Data4[7] = (Data42 & 0x0000000000ff);
+    //s += L'}' == *s;
+}
 
 #define API(n)                          { L#n, do_##n }
 struct api
@@ -179,12 +258,16 @@ struct api apitab[] =
     API(DeleteFile),
     API(CreateDirectory),
     API(RemoveDirectory),
+    API(CreateSymbolicLink),
     API(GetFileInformation),
     API(SetFileAttributes),
     API(SetFileTime),
     API(SetEndOfFile),
     API(GetFileSecurity),
     API(SetFileSecurity),
+    API(GetReparsePoint),
+    API(SetReparsePoint),
+    API(DeleteReparsePoint),
     API(FindFiles),
     API(FindStreams),
     API(MoveFileEx),
@@ -300,6 +383,14 @@ static int do_RemoveDirectory(int argc, wchar_t **argv)
     if (argc != 2)
         fail("usage: RemoveDirectory PathName");
     BOOL r = RemoveDirectoryW(argv[1]);
+    errprint(r);
+    return 0;
+}
+static int do_CreateSymbolicLink(int argc, wchar_t **argv)
+{
+    if (argc != 4)
+        fail("usage: CreateSymbolicLink SymlinkFileName TargetFileName Flags");
+    BOOL r = CreateSymbolicLinkW(argv[1], argv[2], symval(argv[3]));
     errprint(r);
     return 0;
 }
@@ -475,6 +566,152 @@ static int do_SetFileSecurity(int argc, wchar_t **argv)
     BOOL r = SetFileSecurityW(argv[1], SecurityInformation, SecurityDescriptor);
     errprint(r);
     LocalFree(SecurityDescriptor);
+    return 0;
+}
+static int do_GetReparsePoint(int argc, wchar_t **argv)
+{
+    if (argc != 2)
+        fail("usage: GetReparsePoint FileName");
+    HANDLE h = CreateFileW(argv[1],
+        FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        0, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
+    if (INVALID_HANDLE_VALUE == h)
+        errprint(0);
+    else
+    {
+        union
+        {
+            REPARSE_DATA_BUFFER D;
+            REPARSE_GUID_DATA_BUFFER G;
+            UINT8 B[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+        } ReparseDataBuf;
+        DWORD Bytes;
+        BOOL r = DeviceIoControl(h, FSCTL_GET_REPARSE_POINT,
+            0, 0,
+            &ReparseDataBuf, sizeof ReparseDataBuf,
+            &Bytes, 0);
+        if (r)
+        {
+            if (IO_REPARSE_TAG_MOUNT_POINT == ReparseDataBuf.D.ReparseTag)
+            {
+                printf("ReparseTag=IO_REPARSE_TAG_MOUNT_POINT "
+                    "SubstituteName=\"%.*S\" PrintName=\"%.*S\""
+                    "\n",
+                    (int)(ReparseDataBuf.D.MountPointReparseBuffer.SubstituteNameLength / sizeof(WCHAR)),
+                    ReparseDataBuf.D.MountPointReparseBuffer.PathBuffer +
+                        ReparseDataBuf.D.MountPointReparseBuffer.SubstituteNameOffset / sizeof(WCHAR),
+                    (int)(ReparseDataBuf.D.MountPointReparseBuffer.PrintNameLength / sizeof(WCHAR)),
+                    ReparseDataBuf.D.MountPointReparseBuffer.PathBuffer +
+                        ReparseDataBuf.D.MountPointReparseBuffer.PrintNameOffset / sizeof(WCHAR));
+            }
+            else if (IO_REPARSE_TAG_SYMLINK == ReparseDataBuf.D.ReparseTag)
+            {
+                printf("ReparseTag=IO_REPARSE_TAG_SYMLINK "
+                    "SubstituteName=\"%.*S\" PrintName=\"%.*S\" Flags=%u"
+                    "\n",
+                    (int)(ReparseDataBuf.D.SymbolicLinkReparseBuffer.SubstituteNameLength / sizeof(WCHAR)),
+                    ReparseDataBuf.D.SymbolicLinkReparseBuffer.PathBuffer +
+                        ReparseDataBuf.D.SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(WCHAR),
+                    (int)(ReparseDataBuf.D.SymbolicLinkReparseBuffer.PrintNameLength / sizeof(WCHAR)),
+                    ReparseDataBuf.D.SymbolicLinkReparseBuffer.PathBuffer +
+                        ReparseDataBuf.D.SymbolicLinkReparseBuffer.PrintNameOffset / sizeof(WCHAR),
+                    ReparseDataBuf.D.SymbolicLinkReparseBuffer.Flags);
+            }
+            else if (IsReparseTagMicrosoft(ReparseDataBuf.D.ReparseTag))
+            {
+                printf("ReparseTag=%#" PRIx32 " ReparseDataLength=%hu"
+                    "\n",
+                    ReparseDataBuf.D.ReparseTag, ReparseDataBuf.D.ReparseDataLength);
+            }
+            else
+            {
+#define Guid ReparseDataBuf.G.ReparseGuid
+                printf("ReparseTag=%#" PRIx32 " ReparseDataLength=%hu "
+                    "ReparseGuid={%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X} "
+                    "ReparseData=\"",
+                    ReparseDataBuf.G.ReparseTag, ReparseDataBuf.G.ReparseDataLength,
+                    Guid.Data1, Guid.Data2, Guid.Data3,
+                    Guid.Data4[0], Guid.Data4[1], Guid.Data4[2], Guid.Data4[3],
+                    Guid.Data4[4], Guid.Data4[5], Guid.Data4[6], Guid.Data4[7]);
+                char space[2] = { 0, 0 };
+                for (USHORT i = 0; ReparseDataBuf.G.ReparseDataLength > i; i++)
+                {
+                    printf("%s%02X", space, ReparseDataBuf.G.GenericReparseBuffer.DataBuffer[i]);
+                    space[0] = ' ';
+                }
+                printf("\"\n");
+#undef Guid
+            }
+            errprint(1);
+        }
+        else
+            errprint(0);
+        CloseHandle(h);
+    }
+    return 0;
+}
+static int do_SetReparsePoint(int argc, wchar_t **argv)
+{
+    if (argc < 5 || argc > 4 + 256)
+        fail("usage: SetReparsePoint FileName ReparseTag GUID Byte ...");
+    HANDLE h = CreateFileW(argv[1],
+        FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        0, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
+    if (INVALID_HANDLE_VALUE == h)
+        errprint(0);
+    else
+    {
+        union
+        {
+            REPARSE_DATA_BUFFER D;
+            REPARSE_GUID_DATA_BUFFER G;
+            UINT8 B[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+        } ReparseDataBuf;
+        DWORD Bytes;
+        ReparseDataBuf.G.ReparseTag = symval(argv[2]);
+        ReparseDataBuf.G.ReparseDataLength = argc - 4;
+        ReparseDataBuf.G.Reserved = 0;
+        guidval(argv[3], &ReparseDataBuf.G.ReparseGuid);
+        for (USHORT i = 0; ReparseDataBuf.G.ReparseDataLength > i; i++)
+            ReparseDataBuf.G.GenericReparseBuffer.DataBuffer[i] = wcstoul(argv[4 + i], 0, 16);
+        BOOL r = DeviceIoControl(h, FSCTL_SET_REPARSE_POINT,
+            &ReparseDataBuf, REPARSE_GUID_DATA_BUFFER_HEADER_SIZE + ReparseDataBuf.G.ReparseDataLength,
+            0, 0,
+            &Bytes, 0);
+        errprint(r);
+        CloseHandle(h);
+    }
+    return 0;
+}
+static int do_DeleteReparsePoint(int argc, wchar_t **argv)
+{
+    if (argc != 4)
+        fail("usage: DeleteReparsePoint FileName ReparseTag GUID");
+    HANDLE h = CreateFileW(argv[1],
+        FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        0, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
+    if (INVALID_HANDLE_VALUE == h)
+        errprint(0);
+    else
+    {
+        union
+        {
+            REPARSE_DATA_BUFFER D;
+            REPARSE_GUID_DATA_BUFFER G;
+            UINT8 B[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+        } ReparseDataBuf;
+        DWORD Bytes;
+        ReparseDataBuf.G.ReparseTag = symval(argv[2]);
+        ReparseDataBuf.G.ReparseDataLength = 0;
+        ReparseDataBuf.G.Reserved = 0;
+        guidval(argv[3], &ReparseDataBuf.G.ReparseGuid);
+        BOOL r = DeviceIoControl(h, FSCTL_DELETE_REPARSE_POINT,
+            &ReparseDataBuf, REPARSE_GUID_DATA_BUFFER_HEADER_SIZE,
+            0, 0,
+            &Bytes, 0);
+        errprint(r);
+        CloseHandle(h);
+    }
     return 0;
 }
 static int do_FindFiles(int argc, wchar_t **argv)
