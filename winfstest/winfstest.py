@@ -119,7 +119,9 @@ class _fstest_task(object):
             else:
                 testline(0, "%s \"%s\" %s - got %s" % (s, cmd, 0, err))
         else:
-            if str(exp) == err:
+            if err is None:
+                testline(1, "%s \"%s\" %s" % (s, cmd, exp))
+            elif str(exp) == err:
                 testline(1, "%s \"%s\" %s" % (s, cmd, exp))
             else:
                 testline(0, "%s \"%s\" %s - got %s" % (s, cmd, exp, err))

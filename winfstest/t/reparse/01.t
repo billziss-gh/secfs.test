@@ -10,13 +10,13 @@ expect("CreateDirectory %s 0" % name, 0)
 expect("GetFileInformation %s" % name, lambda r: r[0]["FileAttributes"] == 0x10)
 expect("SetReparsePoint %s 42 {92A23BD8-99F5-4FD6-807C-C56F3A063C52} 1A 2B 3C 4D 5F" % name, 0)
 expect("GetFileInformation %s" % name, lambda r: r[0]["FileAttributes"] == 0x410)
-expect("GetReparsePoint %s" %name, lambda r:\
+expect("GetReparsePoint %s" % name, lambda r:\
     r[0]["ReparseTag"] == 42 and \
     r[0]["ReparseDataLength"] == 5 and \
     r[0]["ReparseGuid"] == "{92A23BD8-99F5-4FD6-807C-C56F3A063C52}" and \
     r[0]["ReparseData"] == "1A 2B 3C 4D 5F")
 expect("SetReparsePoint %s 42 {92A23BD8-99F5-4FD6-807C-C56F3A063C52} A1 B2 C3 D4 F5 1A 2B 3C 4D 5F" % name, 0)
-expect("GetReparsePoint %s" %name, lambda r:\
+expect("GetReparsePoint %s" % name, lambda r:\
     r[0]["ReparseTag"] == 42 and \
     r[0]["ReparseDataLength"] == 10 and \
     r[0]["ReparseGuid"] == "{92A23BD8-99F5-4FD6-807C-C56F3A063C52}" and \
@@ -42,7 +42,7 @@ expect("SetReparsePoint %s 42 {92A23BD8-99F5-4FD6-807C-C56F3A063C52} 1A 2B 3C 4D
 expect("DeleteFile %s\\1" % name, 0)
 expect("SetReparsePoint %s 42 {92A23BD8-99F5-4FD6-807C-C56F3A063C52} 1A 2B 3C 4D 5F" % name, 0)
 expect("GetFileInformation %s" % name, lambda r: r[0]["FileAttributes"] == 0x410)
-expect("GetReparsePoint %s" %name, lambda r:\
+expect("GetReparsePoint %s" % name, lambda r:\
     r[0]["ReparseTag"] == 42 and \
     r[0]["ReparseDataLength"] == 5 and \
     r[0]["ReparseGuid"] == "{92A23BD8-99F5-4FD6-807C-C56F3A063C52}" and \
