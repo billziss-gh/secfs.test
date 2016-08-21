@@ -13,6 +13,17 @@ def safeopen(name, mode = "r"):
         return None
 
 srcname, dstname = uniqname(), uniqname()
+dstpath = os.path.realpath(dstname)
+
+# poor man's cygpath!
+if sys.platform == "cygwin":
+    cygdrive = os.readlink("/proc/cygdrive")
+    if not cygdrive.endswith("/"):
+        cygdrive += "/"
+    if dstpath.startswith(cygdrive):
+        dstpath = dstpath[len(cygdrive):]
+    dstpath = dstpath[0:1].upper() + ":" + dstpath[1:]
+    dstpath = dstpath.replace('/', '\\')
 
 e, r = expect("CreateSymbolicLink %s %s SYMBOLIC_LINK_FLAG_DIRECTORY" % (srcname, dstname), 0)
 if e == "0":
@@ -30,18 +41,6 @@ if e == "0":
     expect("RemoveDirectory %s" % dstname, 0)
     testeval(not safeopen(os.path.join(srcname, "1")))
     expect("RemoveDirectory %s" % srcname, 0)
-
-    dstpath = os.path.realpath(dstname)
-
-    # poor man's cygpath!
-    if sys.platform == "cygwin":
-        cygdrive = os.readlink("/proc/cygdrive")
-        if not cygdrive.endswith("/"):
-            cygdrive += "/"
-        if dstpath.startswith(cygdrive):
-            dstpath = dstpath[len(cygdrive):]
-        dstpath = dstpath[0:1].upper() + ":" + dstpath[1:]
-        dstpath = dstpath.replace('/', '\\')
 
     # absolute symlink
     e, r = expect("CreateSymbolicLink %s %s SYMBOLIC_LINK_FLAG_DIRECTORY" % (srcname, dstpath), 0)
