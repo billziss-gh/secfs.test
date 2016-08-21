@@ -82,6 +82,8 @@ static int do_GetFileInformation(int argc, wchar_t **argv);
 static int do_SetFileAttributes(int argc, wchar_t **argv);
 static int do_SetFileTime(int argc, wchar_t **argv);
 static int do_SetEndOfFile(int argc, wchar_t **argv);
+static int do_ReadFile(int argc, wchar_t **argv);
+static int do_WriteFile(int argc, wchar_t **argv);
 static int do_GetFileSecurity(int argc, wchar_t **argv);
 static int do_SetFileSecurity(int argc, wchar_t **argv);
 static int do_GetReparsePoint(int argc, wchar_t **argv);
@@ -263,6 +265,8 @@ struct api apitab[] =
     API(SetFileAttributes),
     API(SetFileTime),
     API(SetEndOfFile),
+    API(ReadFile),
+    API(WriteFile),
     API(GetFileSecurity),
     API(SetFileSecurity),
     API(GetReparsePoint),
@@ -510,6 +514,69 @@ static int do_SetEndOfFile(int argc, wchar_t **argv)
         EofInfo.EndOfFile.QuadPart = wcstoull(argv[2], 0, 0);
         BOOL r = SetFileInformationByHandle(h, FileEndOfFileInfo, &EofInfo, sizeof EofInfo);
         errprint(r);
+        CloseHandle(h);
+    }
+    return 0;
+}
+static int do_ReadFile(int argc, wchar_t **argv)
+{
+    if (argc != 4)
+        fail("usage: ReadFile FileName Offset Length");
+    HANDLE h = CreateFileW(argv[1],
+        GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        0, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
+    if (INVALID_HANDLE_VALUE == h)
+        errprint(0);
+    else
+    {
+        UINT8 Buffer[256];
+        DWORD Bytes = symval(argv[3]);
+        OVERLAPPED Overlapped = { 0 };
+        Overlapped.Offset = symval(argv[2]);
+        BOOL r = ReadFile(h, Buffer, Bytes, &Bytes, &Overlapped);
+        if (r)
+        {
+            errprint(1);
+            printf("Length=%lu Data=\"", Bytes);
+            char space[2] = { 0, 0 };
+            for (DWORD i = 0; Bytes > i; i++)
+            {
+                printf("%s%02X", space, Buffer[i]);
+                space[0] = ' ';
+            }
+            printf("\"\n");
+        }
+        else
+            errprint(0);
+        CloseHandle(h);
+    }
+    return 0;
+}
+static int do_WriteFile(int argc, wchar_t **argv)
+{
+    if (argc < 4 || argc > 3 + 256)
+        fail("usage: WriteFile FileName Offset Byte ...");
+    HANDLE h = CreateFileW(argv[1],
+        GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        0, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
+    if (INVALID_HANDLE_VALUE == h)
+        errprint(0);
+    else
+    {
+        UINT8 Buffer[256];
+        DWORD Bytes = argc - 3;
+        OVERLAPPED Overlapped = { 0 };
+        for (DWORD i = 0; Bytes > i; i++)
+            Buffer[i] = wcstoul(argv[3 + i], 0, 16);
+        Overlapped.Offset = symval(argv[2]);
+        BOOL r = WriteFile(h, Buffer, Bytes, &Bytes, &Overlapped);
+        if (r)
+        {
+            errprint(1);
+            printf("Length=%lu\n", Bytes);
+        }
+        else
+            errprint(0);
         CloseHandle(h);
     }
     return 0;
