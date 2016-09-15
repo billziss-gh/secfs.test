@@ -22,7 +22,7 @@ if sys.platform == "cygwin":
         cygdrive += "/"
     if dstpath.startswith(cygdrive):
         dstpath = dstpath[len(cygdrive):]
-    dstpath = dstpath[0:1].upper() + ":" + dstpath[1:]
+        dstpath = dstpath[0:1].upper() + ":" + dstpath[1:]
     dstpath = dstpath.replace('/', '\\')
 
 e, r = expect("CreateSymbolicLink %s %s 0" % (srcname, dstname), 0)
@@ -61,8 +61,8 @@ if e == "0":
     expect("GetFileInformation %s" % srcname, lambda r: r[0]["FileAttributes"] == 0x420)
     expect("GetReparsePoint %s" % srcname, lambda r:\
         r[0]["ReparseTag"] == "IO_REPARSE_TAG_SYMLINK" and \
-        r[0]["SubstituteName"] == "\\??\\" + dstpath and \
-        r[0]["PrintName"] == dstpath and \
+        r[0]["SubstituteName"] == "\\??\\" + (dstpath if "\\" != dstpath[:1] else "UNC" + dstpath[1:]) and \
+        r[0]["PrintName"] == (dstpath if "\\" != dstpath[:1] else dstpath[1:]) and \
         r[0]["Flags"] == 0)
     testeval(not safeopen(srcname))
     expect("CreateFile %s GENERIC_WRITE 0 0 CREATE_NEW FILE_ATTRIBUTE_NORMAL 0" % dstname, 0)
