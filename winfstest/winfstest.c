@@ -73,6 +73,7 @@ typedef struct _REPARSE_DATA_BUFFER
 } REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
 #endif
 
+static int do_SetCurrentDirectory(int argc, wchar_t **argv);
 static int do_CreateFile(int argc, wchar_t **argv);
 static int do_DeleteFile(int argc, wchar_t **argv);
 static int do_CreateDirectory(int argc, wchar_t **argv);
@@ -256,6 +257,7 @@ struct api
 };
 struct api apitab[] =
 {
+    API(SetCurrentDirectory),
     API(CreateFile),
     API(DeleteFile),
     API(CreateDirectory),
@@ -335,6 +337,14 @@ static void errprint(int success)
         printf("%S\n", errstr(GetLastError()));
 }
 
+static int do_SetCurrentDirectory(int argc, wchar_t **argv)
+{
+    if (argc != 2)
+        fail("usage: SetCurrentDirectory PathName");
+    BOOL r = SetCurrentDirectoryW(argv[1]);
+    errprint(r);
+    return 0;
+}
 static int do_CreateFile(int argc, wchar_t **argv)
 {
     if (argc != 8)
