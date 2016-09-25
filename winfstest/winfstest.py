@@ -115,7 +115,7 @@ class _fstest_task(object):
         s = "expect" if not self.tsk else "expect_task"
         if isinstance(exp, types.FunctionType): # function, lambda
             if "0" == err:
-                testline(exp(res), "%s \"%s\" %s" % (s, cmd, exp.__name__))
+                testline(exp(res), "%s \"%s\" %s - result %s" % (s, cmd, exp.__name__, res))
             else:
                 testline(0, "%s \"%s\" %s - got %s" % (s, cmd, 0, err))
         else:
