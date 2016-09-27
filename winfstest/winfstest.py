@@ -100,7 +100,7 @@ class _fstest_task(object):
                 continue
             d = {}
             res.append(d)
-            for p in shlex.split(l):
+            for p in shlex.split(l, False, False):
                 k, v = p.split("=", 2)
                 if v.startswith('"') and v.endswith('"') and len(v) >= 2:
                     v = v[1:-1]
