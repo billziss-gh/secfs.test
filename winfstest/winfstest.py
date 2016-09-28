@@ -29,7 +29,7 @@
 # (INCLUDING NEGLIGENCE  OR OTHERWISE) ARISING IN  ANY WAY OUT OF  THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import inspect, os, random, shlex, subprocess, sys, threading, types
+import inspect, os, random, re, subprocess, sys, threading, types
 
 __all__ = [
     "testline", "testeval", "testdone", "uniqname",
@@ -57,6 +57,7 @@ def uniqname():
     return "%08x" % random.randint(1, 2 ** 32)
 
 _fstest_exe = os.path.splitext(os.path.realpath(__file__))[0] + ".exe"
+_field_re = re.compile(r'(?:[^\s"]|"[^"]*")+')
 class _fstest_task(object):
     def __init__(self, tsk, cmd, exp):
         self.tsk = tsk
@@ -100,7 +101,7 @@ class _fstest_task(object):
                 continue
             d = {}
             res.append(d)
-            for p in shlex.split(l, False, False):
+            for p in _field_re.findall(l):
                 k, v = p.split("=", 2)
                 if v.startswith('"') and v.endswith('"') and len(v) >= 2:
                     v = v[1:-1]
