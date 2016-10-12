@@ -59,4 +59,21 @@ if e == "0":
     expect("DeleteFile %s" % dstname, 0)
     expect("DeleteFile %s" % srcname, 0)
 
+    expect("CreateSymbolicLink %s %s SYMBOLIC_LINK_FLAG_DIRECTORY" % (srcname, dstname), 0)
+    expect("CreateDirectory %s 0" % srcname, "ERROR_ALREADY_EXISTS")
+    expect("CreateFile %s GENERIC_WRITE 0 0 CREATE_NEW FILE_ATTRIBUTE_NORMAL 0" % srcname, "ERROR_ACCESS_DENIED")
+    expect("CreateFile %s:strm GENERIC_WRITE 0 0 CREATE_NEW FILE_ATTRIBUTE_NORMAL 0" % srcname, 0)
+    expect("CreateFile %s:strm GENERIC_WRITE 0 0 OPEN_EXISTING FILE_ATTRIBUTE_NORMAL 0" % srcname, 0)
+    expect("CreateFile %s:strm GENERIC_WRITE 0 0 OPEN_EXISTING FILE_ATTRIBUTE_NORMAL 0" % dstname, 0)
+    expect("DeleteFile %s" % dstname, 0)
+    expect("RemoveDirectory %s" % srcname, 0)
+
+    expect("CreateDirectory %s 0" % dstname, 0)
+    expect("CreateSymbolicLink %s %s SYMBOLIC_LINK_FLAG_DIRECTORY" % (srcname, dstname), 0)
+    expect("CreateFile %s:strm GENERIC_WRITE 0 0 CREATE_NEW FILE_ATTRIBUTE_NORMAL 0" % srcname, 0)
+    expect("CreateFile %s:strm GENERIC_WRITE 0 0 OPEN_EXISTING FILE_ATTRIBUTE_NORMAL 0" % srcname, 0)
+    expect("CreateFile %s:strm GENERIC_WRITE 0 0 OPEN_EXISTING FILE_ATTRIBUTE_NORMAL 0" % dstname, 0)
+    expect("RemoveDirectory %s" % dstname, 0)
+    expect("RemoveDirectory %s" % srcname, 0)
+
 testdone()

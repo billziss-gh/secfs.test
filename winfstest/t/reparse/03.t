@@ -40,6 +40,8 @@ if e == "0":
     expect("DeleteFile %s\\1" % dstname, 0)
     expect("RemoveDirectory %s" % dstname, 0)
     testeval(not safeopen(os.path.join(srcname, "1")))
+    expect("CreateDirectory %s 0" % srcname, "ERROR_ALREADY_EXISTS")
+    expect("CreateFile %s GENERIC_WRITE 0 0 CREATE_NEW FILE_ATTRIBUTE_NORMAL 0" % srcname, "ERROR_ACCESS_DENIED")
     expect("RemoveDirectory %s" % srcname, 0)
 
     # absolute symlink
@@ -57,6 +59,8 @@ if e == "0":
     expect("DeleteFile %s\\1" % dstname, 0)
     expect("RemoveDirectory %s" % dstname, 0)
     testeval(not safeopen(os.path.join(srcname, "1")))
+    expect("CreateDirectory %s 0" % srcname, "ERROR_ALREADY_EXISTS")
+    expect("CreateFile %s GENERIC_WRITE 0 0 CREATE_NEW FILE_ATTRIBUTE_NORMAL 0" % srcname, "ERROR_ACCESS_DENIED")
     expect("RemoveDirectory %s" % srcname, 0)
 
 testdone()
