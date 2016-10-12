@@ -55,4 +55,10 @@ expect("GetReparsePoint %s" % name, lambda r:\
     r[0]["ReparseData"] == "1A 2B 3C 4D 5F")
 expect("DeleteFile %s" % name, 0)
 
+expect("CreateFile %s GENERIC_WRITE 0 0 CREATE_NEW FILE_ATTRIBUTE_NORMAL 0" % name, 0)
+expect("SetReparsePoint %s 42 {92A23BD8-99F5-4FD6-807C-C56F3A063C52} 1A 2B 3C 4D 5F" % name, 0)
+expect("CreateFile %s GENERIC_WRITE 0 0 CREATE_NEW FILE_ATTRIBUTE_NORMAL 0" % name, "ERROR_CANT_ACCESS_FILE")
+expect("CreateFile %s GENERIC_WRITE 0 0 CREATE_NEW FILE_ATTRIBUTE_NORMAL+FILE_FLAG_OPEN_REPARSE_POINT 0" % name, "ERROR_FILE_EXISTS")
+expect("DeleteFile %s" % name, 0)
+
 testdone()
