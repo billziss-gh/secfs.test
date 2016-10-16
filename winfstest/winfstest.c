@@ -930,7 +930,7 @@ int wmain(int argc, wchar_t **argv)
     if (0 == api)
         fail("cannot find API %S", argv[0]);
     int ec = api->fn(argc, argv);
-    fflush(stdout);
+    fclose(stdout);
     if (wait_for_input_before_exit)
     {
         char buf[80];

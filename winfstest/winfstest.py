@@ -74,6 +74,10 @@ class _fstest_task(object):
         self.thr = threading.Thread(target=self._readthread)
         self.thr.start()
     def __enter__(self):
+        self.thr.join()
+        self.err, self.res = self._fstest_res()
+        if self.exp is not None:
+            self._expect(self.cmd, self.exp, self.err, self.res)
         return self
     def __exit__(self, type, value, traceback):
         if self.tsk:
@@ -82,14 +86,10 @@ class _fstest_task(object):
             except IOError:
                 pass
         self.prc.stdin.close()
-        self.thr.join()
         self.prc.wait()
         ret = self.prc.poll()
         if ret:
             raise subprocess.CalledProcessError(ret, self.cmd)
-        self.err, self.res = self._fstest_res()
-        if self.exp is not None:
-            self._expect(self.cmd, self.exp, self.err, self.res)
     def _readthread(self):
         self.out = self.prc.stdout.read()
         self.out = self.out.replace("\r\n", "\n").replace("\r", "\n")
