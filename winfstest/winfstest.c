@@ -95,6 +95,7 @@ static int do_FindStreams(int argc, wchar_t **argv);
 static int do_MoveFileEx(int argc, wchar_t **argv);
 static int do_RenameStream(int argc, wchar_t **argv);
 
+static int keep_backup_restore_privileges = 0;
 static int always_print_last_error = 0;
 static int wait_for_input_before_exit = 0;
 
@@ -335,6 +336,27 @@ static void errprint(int success)
         printf("0\n");
     else
         printf("%S\n", errstr(GetLastError()));
+}
+
+static void disable_backup_restore_privileges(void)
+{
+    union
+    {
+        TOKEN_PRIVILEGES P;
+        UINT8 B[sizeof(TOKEN_PRIVILEGES) + sizeof(LUID_AND_ATTRIBUTES)];
+    } Privileges;
+    HANDLE Token;
+    Privileges.P.PrivilegeCount = 2;
+    Privileges.P.Privileges[0].Attributes = 0;
+    Privileges.P.Privileges[1].Attributes = 0;
+    if (!LookupPrivilegeValueW(0, L"" SE_BACKUP_NAME, &Privileges.P.Privileges[0].Luid) ||
+        !LookupPrivilegeValueW(0, L"" SE_RESTORE_NAME, &Privileges.P.Privileges[1].Luid))
+        fail("cannot lookup backup/restore privileges");
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &Token))
+        fail("cannot open process token");
+    if (!AdjustTokenPrivileges(Token, FALSE, &Privileges.P, 0, 0, 0))
+        fail("cannot disable backup/restore privileges");
+    CloseHandle(Token);
 }
 
 static int do_SetCurrentDirectory(int argc, wchar_t **argv)
@@ -899,7 +921,7 @@ static int do_RenameStream(int argc, wchar_t **argv)
 }
 static void usage()
 {
-    fprintf(stderr, "usage: winfstest [-w][-e] ApiName args...\n");
+    fprintf(stderr, "usage: winfstest [-P][-w][-e] ApiName args...\n");
     for (size_t i = 0; sizeof apitab / sizeof apitab[0] > i; i++)
         fprintf(stderr, "    %S\n", apitab[i].name);
     exit(1);
@@ -912,6 +934,13 @@ int wmain(int argc, wchar_t **argv)
     argc--; argv++;
     if (argc < 1)
         usage();
+    if (0 == wcscmp(L"-P", argv[0]))
+    {
+        keep_backup_restore_privileges = 1;
+        argc--; argv++;
+        if (argc < 1)
+            usage();
+    }
     if (0 == wcscmp(L"-w", argv[0]))
     {
         wait_for_input_before_exit = 1;
@@ -929,6 +958,8 @@ int wmain(int argc, wchar_t **argv)
     struct api *api = apiget(argv[0]);
     if (0 == api)
         fail("cannot find API %S", argv[0]);
+    if (!keep_backup_restore_privileges)
+        disable_backup_restore_privileges();
     int ec = api->fn(argc, argv);
     fclose(stdout);
     if (wait_for_input_before_exit)
