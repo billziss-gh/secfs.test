@@ -7,7 +7,7 @@ dir=`dirname $0`
 . ${dir}/../misc.sh
 
 case "${os}:${fs}" in
-Darwin:HFS+)
+Darwin:HFS+|Darwin:cgofuse)
     # This test creates an unremovable file on Darwin:HFS+; so disable it!
     quick_exit
     ;;

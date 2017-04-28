@@ -23,7 +23,7 @@ Linux)
 	;;
 Darwin)
     case "${fs}" in
-    secfs)
+    secfs|cgofuse)
     	expect EINVAL rmdir ${n0}/${n1}/..
         ;;
     *)

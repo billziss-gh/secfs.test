@@ -78,7 +78,7 @@ sleep 1
 expect 0 rename ${n0} ${n1}
 ctime2=`${fstest} stat ${n1} ctime`
 case "${os}:${fs}" in
-Darwin:*|*:secfs)
+Darwin:*|*:secfs|*:cgofuse)
     # This test wants ctime of a renamed file to be updated, but POSIX does not require it
     # and Darwin (and secfs) do not update it!
     #
@@ -104,7 +104,7 @@ sleep 1
 expect 0 rename ${n0} ${n1}
 ctime2=`${fstest} stat ${n1} ctime`
 case "${os}:${fs}" in
-Darwin:*|*:secfs)
+Darwin:*|*:secfs|*:cgofuse)
     # This test wants ctime of a renamed file to be updated, but POSIX does not require it
     # and Darwin (and secfs) do not update it!
     #
@@ -123,7 +123,7 @@ sleep 1
 expect 0 rename ${n0} ${n1}
 ctime2=`${fstest} stat ${n1} ctime`
 case "${os}:${fs}" in
-Darwin:*|*:secfs)
+Darwin:*|*:secfs|*:cgofuse)
     # This test wants ctime of a renamed file to be updated, but POSIX does not require it
     # and Darwin (and secfs) do not update it!
     #
@@ -142,7 +142,7 @@ sleep 1
 expect 0 rename ${n0} ${n1}
 ctime2=`${fstest} lstat ${n1} ctime`
 case "${os}:${fs}" in
-Darwin:*|*:secfs)
+Darwin:*|*:secfs|*:cgofuse)
     # This test wants ctime of a renamed file to be updated, but POSIX does not require it
     # and Darwin (and secfs) do not update it!
     #

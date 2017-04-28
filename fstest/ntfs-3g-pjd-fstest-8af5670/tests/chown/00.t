@@ -313,7 +313,7 @@ sleep 1
 expect 0 -- chown ${n0} -1 -1
 ctime2=`${fstest} stat ${n0} ctime`
 case "${os}:${fs}" in
-Linux:glusterfs)
+Linux:glusterfs|Linux:cgofuse)
 	test_check $ctime1 -le $ctime2
 	;;
 SunOS:*|Linux:ntfs-3g)
@@ -334,7 +334,7 @@ sleep 1
 expect 0 -- chown ${n0} -1 -1
 ctime2=`${fstest} stat ${n0} ctime`
 case "${os}:${fs}" in
-Linux:glusterfs)
+Linux:glusterfs|Linux:cgofuse)
 	test_check $ctime1 -le $ctime2
 	;;
 SunOS:*|Linux:ntfs-3g)
@@ -355,7 +355,7 @@ sleep 1
 expect 0 -- chown ${n0} -1 -1
 ctime2=`${fstest} stat ${n0} ctime`
 case "${os}:${fs}" in
-Linux:glusterfs)
+Linux:glusterfs|Linux:cgofuse)
 	test_check $ctime1 -le $ctime2
 	;;
 SunOS:*|Linux:ntfs-3g)
@@ -376,7 +376,7 @@ sleep 1
 expect 0 -- lchown ${n0} -1 -1
 ctime2=`${fstest} lstat ${n0} ctime`
 case "${os}:${fs}" in
-Linux:glusterfs)
+Linux:glusterfs|Linux:cgofuse)
 	test_check $ctime1 -le $ctime2
 	;;
 SunOS:*|Linux:ntfs-3g)

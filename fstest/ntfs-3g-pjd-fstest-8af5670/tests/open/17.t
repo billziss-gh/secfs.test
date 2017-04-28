@@ -12,7 +12,7 @@ n0=`namegen`
 
 expect 0 mkfifo ${n0} 0644
 case "${os}:${fs}" in
-Darwin:secfs)
+Darwin:secfs|Darwin:cgofuse)
     # This appears to be a problem in OSXFUSE; secfs-fuse does not even see the open() call.
     expect EPERM open ${n0} O_WRONLY,O_NONBLOCK
     ;;

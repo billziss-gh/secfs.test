@@ -7,7 +7,7 @@ dir=`dirname $0`
 . ${dir}/../misc.sh
 
 case "${os}:${fs}" in
-Darwin:HFS+)
+Darwin:HFS+|Darwin:cgofuse)
     # This test makes the filesystem unusable on OS X 10.10; so disable it!
     quick_exit
     ;;
