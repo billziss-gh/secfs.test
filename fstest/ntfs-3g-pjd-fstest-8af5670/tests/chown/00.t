@@ -92,6 +92,9 @@ Linux:glusterfs)
 Linux:*)
 	expect 0555 lstat ${n0} mode
 	;;
+Darwin:*)
+	expect "0555|06555" lstat ${n0} mode
+	;;
 *)
 	expect 06555 lstat ${n0} mode
 	;;
@@ -109,6 +112,9 @@ Linux:glusterfs)
 	;;
 Linux:*)
 	expect 0555 lstat ${n0} mode
+	;;
+Darwin:*)
+	expect "0555|06555" lstat ${n0} mode
 	;;
 *)
 	expect 06555 lstat ${n0} mode
@@ -128,6 +134,9 @@ Linux:glusterfs)
 	;;
 Linux:*)
 	expect 0555 lstat ${n0} mode
+	;;
+Darwin:*)
+	expect "0555|06555" lstat ${n0} mode
 	;;
 *)
 	expect 06555 lstat ${n0} mode
