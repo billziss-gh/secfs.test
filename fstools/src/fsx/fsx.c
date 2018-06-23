@@ -66,7 +66,9 @@
 #include "win/mman.h"
 #include "win/getopt.h"
 #else
+#if !defined(__FreeBSD__)
 #include <sys/xattr.h>
+#endif
 #include <getopt.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -309,6 +311,23 @@ static inline int fremovexattr(int fd, const char *name, int options)
     fsetxattr(fd, name, value, size, options)
 #define fremovexattr(fd, name, options)\
     fremovexattr(fd, name)
+#endif
+
+#if defined(__FreeBSD__)
+#include <inttypes.h>
+
+#define _PATH_FORKSPECIFIER    "/..namedfork/"
+
+#define F_NOCACHE 1000000
+#define fcntl(fd, cmd, ...)\
+    (F_NOCACHE == cmd ? 0 : fcntl(fd, cmd, __VA_ARGS__))
+
+#define fgetxattr(fd, name, value, size, position, options)\
+    (errno = ENOSYS, -1)
+#define fsetxattr(fd, name, value, size, position, options)\
+    (errno = ENOSYS, -1)
+#define fremovexattr(fd, name, options)\
+    (errno = ENOSYS, -1)
 #endif
 
 #if defined(_WIN64) || defined(__linux__)
