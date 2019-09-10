@@ -124,7 +124,9 @@ void file_unlink(int);
 void file_read(int);
 void splash(void);
 void usage(void);
+#if !defined(__APPLE__)
 void bzero();
+#endif
 void clear_stats();
 int validate(char *, int , char );
 
