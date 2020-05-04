@@ -39,3 +39,7 @@ The projects included in the collection are:
 - winfstest: Windows file system testing. Inspired by the FreeBSD fstest, but written from scratch to work on Windows.
     - Platform: Windows
     - License: BSD 3-clause
+
+## Docker Image
+
+A docker image prepared by Yujun Zhang (@yujunz) is available at [dockerhub](https://hub.docker.com/r/yujunz/secfs.test) and can be pulled using `docker pull yujunz/secfs.test`. (See PR #4.)
